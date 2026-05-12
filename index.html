@@ -238,11 +238,11 @@
   }
   .num-select-btn .arrow { color: #888; font-size: 10px; }
   .num-select-list {
-    display: none; position: absolute; top: calc(100% + 4px); left: 0;
-    min-width: 100%; width: max-content; max-width: 90vw;
+    display: none; position: fixed;
+    min-width: 120px; max-width: 90vw;
     background: #fff; border: 1px solid #cdd4e0; border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-    max-height: 60vh; overflow-y: auto; z-index: 50;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    max-height: 50vh; overflow-y: auto; z-index: 9999;
     text-align: left;
   }
   .num-select.open .num-select-list { display: block; }
@@ -549,10 +549,15 @@ function selectSite(id, label) {
   renderAll();
 }
 
-// 드롭다운 외부 클릭 시 닫기
+// 드롭다운 외부 클릭 시 닫기 (주택전시관명 + 번호 모두)
 document.addEventListener('click', (e) => {
-  const cs = $('customSelect');
+  // 주택전시관명 드롭다운
+  const cs = document.getElementById('customSelect');
   if (cs && !cs.contains(e.target)) cs.classList.remove('open');
+  // 번호 선택 드롭다운
+  if (!e.target.closest('.num-select')) {
+    document.querySelectorAll('.num-select').forEach(el => el.classList.remove('open'));
+  }
 });
 
 function getSite(id) { return sites.find(s => s.id == id); }
@@ -734,27 +739,51 @@ function renderDevice(kind) {
 }
 
 function toggleNumDropdown(kind, ev) {
-  if (ev) ev.stopPropagation();
-  document.querySelectorAll('.num-select').forEach(el => {
-    if (el.id === `${kind}_numSelect`) el.classList.toggle('open');
-    else el.classList.remove('open');
-  });
+  if (ev) {
+    ev.stopPropagation();
+    ev.preventDefault();
+  }
+  const target = document.getElementById(`${kind}_numSelect`);
+  if (!target) return;
+  const isOpen = target.classList.contains('open');
+  // 모든 드롭다운 닫기
+  document.querySelectorAll('.num-select').forEach(el => el.classList.remove('open'));
+  // 닫혀있었으면 이번에 열고 위치 잡기
+  if (!isOpen) {
+    target.classList.add('open');
+    const btn = target.querySelector('.num-select-btn');
+    const list = target.querySelector('.num-select-list');
+    if (btn && list) {
+      const rect = btn.getBoundingClientRect();
+      const listHeight = Math.min(window.innerHeight * 0.5, 400);
+      // 아래에 공간이 충분하면 아래로, 부족하면 위로
+      const spaceBelow = window.innerHeight - rect.bottom;
+      if (spaceBelow >= listHeight + 10 || rect.top < listHeight + 10) {
+        // 아래로 펼침
+        list.style.top = (rect.bottom + 4) + 'px';
+        list.style.bottom = 'auto';
+      } else {
+        // 위로 펼침
+        list.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
+        list.style.top = 'auto';
+      }
+      list.style.left = rect.left + 'px';
+      list.style.minWidth = Math.max(rect.width, 200) + 'px';
+    }
+  }
 }
 
 function selectDeviceNum(kind, el, ev) {
-  if (ev) ev.stopPropagation();
+  if (ev) {
+    ev.stopPropagation();
+    ev.preventDefault();
+  }
   const num = el.dataset.num;
-  $(`${kind}_num`).value = num;
-  $(`${kind}_numLabel`).textContent = num;
-  $(`${kind}_numSelect`).classList.remove('open');
+  if (!num) return;
+  document.getElementById(`${kind}_num`).value = num;
+  document.getElementById(`${kind}_numLabel`).textContent = num;
+  document.getElementById(`${kind}_numSelect`).classList.remove('open');
 }
-
-// 번호 드롭다운 외부 클릭 시 닫기
-document.addEventListener('click', (e) => {
-  // 드롭다운 자체 또는 버튼/항목을 클릭한 경우는 닫지 않음
-  if (e.target.closest('.num-select')) return;
-  document.querySelectorAll('.num-select').forEach(el => el.classList.remove('open'));
-});
 
 function startEdit() { editing = true; renderInfo(); enforcePanelWidth(); }
 function cancelEdit() { editing = false; renderInfo(); enforcePanelWidth(); }
