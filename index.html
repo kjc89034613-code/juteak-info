@@ -696,7 +696,7 @@ function renderDevice(kind) {
       const isMine = usedAtSiteNo === s.site_no;
       return `<div class="num-select-item disabled" data-num="">${escapeHtml(m.num)} <span class="muted">(사용중: ${escapeHtml(usedLabel)}${isMine ? ' — 현재' : ''})</span></div>`;
     }
-    return `<div class="num-select-item" data-num="${escapeHtml(m.num)}" onclick="selectDeviceNum('${kind}', this)">${escapeHtml(m.num)} <span class="ok">(미사용)</span></div>`;
+    return `<div class="num-select-item" data-num="${escapeHtml(m.num)}" onclick="selectDeviceNum('${kind}', this, event)">${escapeHtml(m.num)} <span class="ok">(미사용)</span></div>`;
   }).join('');
 
   body.innerHTML = `
@@ -714,7 +714,7 @@ function renderDevice(kind) {
         <tr class="add-tr">
           <td>
             <div class="num-select" id="${kind}_numSelect">
-              <button type="button" class="num-select-btn" onclick="toggleNumDropdown('${kind}')">
+              <button type="button" class="num-select-btn" onclick="toggleNumDropdown('${kind}', event)">
                 <span id="${kind}_numLabel">번호</span>
                 <span class="arrow">▾</span>
               </button>
@@ -733,14 +733,16 @@ function renderDevice(kind) {
   `;
 }
 
-function toggleNumDropdown(kind) {
+function toggleNumDropdown(kind, ev) {
+  if (ev) ev.stopPropagation();
   document.querySelectorAll('.num-select').forEach(el => {
     if (el.id === `${kind}_numSelect`) el.classList.toggle('open');
     else el.classList.remove('open');
   });
 }
 
-function selectDeviceNum(kind, el) {
+function selectDeviceNum(kind, el, ev) {
+  if (ev) ev.stopPropagation();
   const num = el.dataset.num;
   $(`${kind}_num`).value = num;
   $(`${kind}_numLabel`).textContent = num;
@@ -749,9 +751,9 @@ function selectDeviceNum(kind, el) {
 
 // 번호 드롭다운 외부 클릭 시 닫기
 document.addEventListener('click', (e) => {
-  document.querySelectorAll('.num-select').forEach(el => {
-    if (!el.contains(e.target)) el.classList.remove('open');
-  });
+  // 드롭다운 자체 또는 버튼/항목을 클릭한 경우는 닫지 않음
+  if (e.target.closest('.num-select')) return;
+  document.querySelectorAll('.num-select').forEach(el => el.classList.remove('open'));
 });
 
 function startEdit() { editing = true; renderInfo(); enforcePanelWidth(); }
