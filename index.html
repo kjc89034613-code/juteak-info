@@ -162,8 +162,10 @@
   }
   table.device-table .btn-x {
     padding: 3px 9px; background: #d64545; color: #fff;
-    border: 0; border-radius: 3px; font-size: 11.5px; cursor: pointer;
+    border: 0; border-radius: 3px; font-size: 11.5px; font-weight: 600;
+    cursor: pointer;
   }
+  table.device-table .btn-x:hover { background: #b53636; }
   .empty-row td { padding: 14px; color: #999; text-align: center; }
 
   table.device-table tfoot td {
@@ -178,11 +180,11 @@
     box-sizing: border-box;
   }
   table.device-table .btn-add {
-    padding: 3px 9px; background: #28a86b; color: #fff;
+    padding: 3px 9px; background: #1d6e3d; color: #fff;
     border: 0; border-radius: 3px; font-size: 11.5px; font-weight: 600;
     cursor: pointer;
   }
-  table.device-table .btn-add:hover { background: #1f8d57; }
+  table.device-table .btn-add:hover { background: #155a30; }
 
   .add-row {
     padding: 10px; background: #f8faff; border-top: 1px solid #e6e9ef;
@@ -274,7 +276,8 @@
     body { padding: 8px; }
     h1 { font-size: 17px; }
     .main-tabs button { font-size: 12px; padding: 7px 10px; }
-    .top-bar select { font-size: 14px; }
+    .top-bar select { font-size: 12px; padding: 8px; }
+    .top-bar select option { font-size: 12px; }
     table.info-table th { width: 42%; padding: 6px 7px; font-size: 12.5px; }
     table.info-table td { padding: 6px 7px; font-size: 12.5px; }
     table.device-table { font-size: 12px; }
@@ -417,7 +420,13 @@ function renderSiteSelect() {
   for (const s of sites) {
     const opt = document.createElement('option');
     opt.value = s.id;
-    opt.textContent = `${s.group_name || ('현장 ' + s.site_no)} - ${s.house_name || ''} ${s.brand ? '('+s.brand+')' : ''}`;
+    // 주택명과 브랜드명이 동일하면 한 번만 표시
+    const name = s.house_name || '';
+    const brand = s.brand || '';
+    const displayName = (name && brand && name !== brand)
+      ? `${name} (${brand})`
+      : (brand || name);
+    opt.textContent = `${s.group_name || ('현장 ' + s.site_no)} - ${displayName}`;
     sel.appendChild(opt);
   }
   if (prev) sel.value = prev;
@@ -512,7 +521,7 @@ function renderInfo() {
         `).join('')}
       </table>
       <div class="panel-footer">
-        <button class="btn-edit" onclick="startEdit()">✏️ 수정</button>
+        <button class="btn-edit" onclick="startEdit()">수정</button>
       </div>
     `;
   }
@@ -551,7 +560,7 @@ function renderDevice(kind) {
           <input type="date" class="cell-date" value="${escapeHtml(it.returned_date || '')}"
             onchange="updateDeviceDate('${kind}', ${it.id}, 'returned_date', this.value)">
         </td>
-        <td><button class="btn-x" onclick="removeDevice('${kind}', ${it.id})">제거</button></td>
+        <td><button class="btn-x" onclick="removeDevice('${kind}', ${it.id})">삭제</button></td>
       </tr>`).join('')
     : `<tr class="empty-row"><td colspan="4">등록된 항목이 없습니다.</td></tr>`;
 
@@ -589,7 +598,7 @@ function renderDevice(kind) {
           <td></td>
           <td></td>
           <td>
-            <button class="btn-add" onclick="addDevice('${kind}', ${s.site_no})">+ 추가</button>
+            <button class="btn-add" onclick="addDevice('${kind}', ${s.site_no})">등록</button>
           </td>
         </tr>
       </tfoot>
@@ -639,7 +648,7 @@ async function addDevice(kind, siteNo) {
 }
 
 async function removeDevice(kind, id) {
-  if (!confirm('이 항목을 제거하시겠습니까?')) return;
+  if (!confirm('이 항목을 삭제하시겠습니까?')) return;
   const table = kind === 'ext' ? 'juteak_extensions' : 'juteak_tablets';
   try {
     const { error } = await supa.from(table).delete().eq('id', id);
@@ -647,9 +656,9 @@ async function removeDevice(kind, id) {
     if (kind === 'ext') extensions = extensions.filter(x => x.id !== id);
     else tablets = tablets.filter(x => x.id !== id);
     renderDevice('ext'); renderDevice('tab'); renderMaster();
-    toast('✓ 제거되었습니다');
+    toast('✓ 삭제되었습니다');
   } catch (e) {
-    toast('⚠️ 제거 실패: ' + (e.message || e));
+    toast('⚠️ 삭제 실패: ' + (e.message || e));
   }
 }
 
