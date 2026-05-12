@@ -41,6 +41,37 @@
     background: #fff;
   }
 
+  /* 커스텀 드롭다운 */
+  .custom-select {
+    flex: 1; min-width: 180px; position: relative;
+  }
+  .custom-select-btn {
+    width: 100%; padding: 9px 12px;
+    border: 1px solid #cdd4e0; border-radius: 6px; font-size: 14px;
+    background: #fff; cursor: pointer; text-align: left;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: inherit; color: #222;
+  }
+  .custom-select-btn:hover { border-color: #2e6bd9; }
+  .custom-select-btn .arrow {
+    color: #888; font-size: 11px; margin-left: 6px; flex-shrink: 0;
+  }
+  .custom-select-list {
+    display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: #fff; border: 1px solid #cdd4e0; border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    max-height: 60vh; overflow-y: auto; z-index: 50;
+  }
+  .custom-select.open .custom-select-list { display: block; }
+  .custom-select-item {
+    padding: 9px 12px; cursor: pointer; font-size: 13px;
+    border-bottom: 1px solid #f0f2f5; color: #333;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .custom-select-item:last-child { border-bottom: 0; }
+  .custom-select-item:hover { background: #f0f6ff; }
+  .custom-select-item.selected { background: #e0ecff; color: #1f3a68; font-weight: 600; }
+
   .sub-tabs {
     display: none;
     gap: 4px; margin-bottom: 10px;
@@ -278,6 +309,8 @@
     .main-tabs button { font-size: 12px; padding: 7px 10px; }
     .top-bar select { font-size: 12px; padding: 8px; }
     .top-bar select option { font-size: 12px; }
+    .custom-select-btn { font-size: 12px; padding: 8px 10px; }
+    .custom-select-item { font-size: 12px; padding: 8px 10px; }
     table.info-table th { width: 42%; padding: 6px 7px; font-size: 12.5px; }
     table.info-table td { padding: 6px 7px; font-size: 12.5px; }
     table.device-table { font-size: 12px; }
@@ -298,10 +331,14 @@
 <!-- 탭 1: 주택전시관 정보 현황 -->
 <div id="tabContentInfo" class="tab-content active">
   <div class="top-bar">
-    <label for="siteSelect">현장 선택:</label>
-    <select id="siteSelect">
-      <option value="">-- 현장을 선택하세요 --</option>
-    </select>
+    <label for="siteSelectBtn">현장 선택:</label>
+    <div class="custom-select" id="customSelect">
+      <button class="custom-select-btn" id="siteSelectBtn" onclick="toggleSiteDropdown()" type="button">
+        <span id="siteSelectLabel">-- 현장을 선택하세요 --</span>
+        <span class="arrow">▾</span>
+      </button>
+      <div class="custom-select-list" id="siteSelectList"></div>
+    </div>
   </div>
 
   <div class="sub-tabs">
@@ -414,23 +451,60 @@ async function loadAll() {
 }
 
 function renderSiteSelect() {
-  const sel = $('siteSelect');
-  const prev = sel.value;
-  sel.innerHTML = '<option value="">-- 현장을 선택하세요 --</option>';
+  const list = $('siteSelectList');
+  list.innerHTML = '';
   for (const s of sites) {
-    const opt = document.createElement('option');
-    opt.value = s.id;
-    // 주택명과 브랜드명이 동일하면 한 번만 표시
     const name = s.house_name || '';
     const brand = s.brand || '';
     const displayName = (name && brand && name !== brand)
       ? `${name} (${brand})`
       : (brand || name);
-    opt.textContent = `${s.group_name || ('현장 ' + s.site_no)} - ${displayName}`;
-    sel.appendChild(opt);
+    const label = `${s.group_name || ('현장 ' + s.site_no)} - ${displayName}`;
+    const item = document.createElement('div');
+    item.className = 'custom-select-item';
+    item.textContent = label;
+    item.dataset.id = s.id;
+    if (s.id == currentSiteId) item.classList.add('selected');
+    item.onclick = () => selectSite(s.id, label);
+    list.appendChild(item);
   }
-  if (prev) sel.value = prev;
+  // 선택된 현장의 라벨 갱신
+  if (currentSiteId) {
+    const cur = sites.find(s => s.id == currentSiteId);
+    if (cur) {
+      const name = cur.house_name || '';
+      const brand = cur.brand || '';
+      const displayName = (name && brand && name !== brand)
+        ? `${name} (${brand})`
+        : (brand || name);
+      $('siteSelectLabel').textContent = `${cur.group_name} - ${displayName}`;
+    }
+  } else {
+    $('siteSelectLabel').textContent = '-- 현장을 선택하세요 --';
+  }
 }
+
+function toggleSiteDropdown() {
+  $('customSelect').classList.toggle('open');
+}
+
+function selectSite(id, label) {
+  currentSiteId = id;
+  editing = false;
+  $('siteSelectLabel').textContent = label;
+  $('customSelect').classList.remove('open');
+  // 선택 강조
+  document.querySelectorAll('.custom-select-item').forEach(it => {
+    it.classList.toggle('selected', it.dataset.id == id);
+  });
+  renderAll();
+}
+
+// 드롭다운 외부 클릭 시 닫기
+document.addEventListener('click', (e) => {
+  const cs = $('customSelect');
+  if (cs && !cs.contains(e.target)) cs.classList.remove('open');
+});
 
 function getSite(id) { return sites.find(s => s.id == id); }
 
@@ -729,12 +803,6 @@ function renderMaster() {
     return `<div class="master-cell unused">${escapeHtml(m.num)}<span class="info">미사용</span></div>`;
   }).join('');
 }
-
-$('siteSelect').addEventListener('change', (e) => {
-  currentSiteId = e.target.value || null;
-  editing = false;
-  renderAll();
-});
 
 (async () => {
   toast('데이터를 불러오는 중...');
