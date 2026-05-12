@@ -242,12 +242,13 @@
     min-width: 120px; max-width: 90vw;
     background: #fff; border: 1px solid #cdd4e0; border-radius: 6px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    max-height: 50vh; overflow-y: auto; z-index: 9999;
+    max-height: 50vh; overflow-y: auto;
     text-align: left;
+    z-index: 99999;
   }
-  .num-select.open .num-select-list { display: block; }
+  .num-select.open .num-select-list { display: block !important; }
   .num-select-item {
-    padding: 7px 12px; cursor: pointer; font-size: 13px;
+    padding: 10px 14px; cursor: pointer; font-size: 15px;
     border-bottom: 1px solid #f0f2f5; color: #333;
     white-space: nowrap;
   }
@@ -256,8 +257,8 @@
   .num-select-item.disabled {
     color: #aaa; cursor: not-allowed; background: #fafafa;
   }
-  .num-select-item .muted { color: #999; font-size: 11.5px; }
-  .num-select-item .ok { color: #1d6e3d; font-size: 11.5px; font-weight: 600; }
+  .num-select-item .muted { color: #999; font-size: 13px; }
+  .num-select-item .ok { color: #1d6e3d; font-size: 13px; font-weight: 600; }
 
   .add-row {
     padding: 10px; background: #f8faff; border-top: 1px solid #e6e9ef;
@@ -549,16 +550,31 @@ function selectSite(id, label) {
   renderAll();
 }
 
+function closeAllNumDropdowns() {
+  document.querySelectorAll('.num-select').forEach(el => {
+    el.classList.remove('open');
+    const list = el.querySelector('.num-select-list');
+    if (list) {
+      list.style.display = '';
+      list.style.top = '';
+      list.style.left = '';
+      list.style.maxHeight = '';
+    }
+  });
+}
+
 // 드롭다운 외부 클릭 시 닫기 (주택전시관명 + 번호 모두)
-document.addEventListener('click', (e) => {
-  // 주택전시관명 드롭다운
+let _suppressOutsideClick = false;
+
+function handleOutsideClick(e) {
+  if (_suppressOutsideClick) return;
+  if (e.target.closest('.num-select')) return;
+  if (e.target.closest('.num-select-list')) return;
   const cs = document.getElementById('customSelect');
   if (cs && !cs.contains(e.target)) cs.classList.remove('open');
-  // 번호 선택 드롭다운
-  if (!e.target.closest('.num-select')) {
-    document.querySelectorAll('.num-select').forEach(el => el.classList.remove('open'));
-  }
-});
+  closeAllNumDropdowns();
+}
+document.addEventListener('click', handleOutsideClick);
 
 function getSite(id) { return sites.find(s => s.id == id); }
 
@@ -746,31 +762,62 @@ function toggleNumDropdown(kind, ev) {
   const target = document.getElementById(`${kind}_numSelect`);
   if (!target) return;
   const isOpen = target.classList.contains('open');
-  // 모든 드롭다운 닫기
-  document.querySelectorAll('.num-select').forEach(el => el.classList.remove('open'));
-  // 닫혀있었으면 이번에 열고 위치 잡기
-  if (!isOpen) {
-    target.classList.add('open');
+  // 모든 드롭다운 닫기 (인라인 스타일도 정리)
+  closeAllNumDropdowns();
+  if (isOpen) return;
+
+  _suppressOutsideClick = true;
+  setTimeout(() => { _suppressOutsideClick = false; }, 200);
+
+  target.classList.add('open');
+
+  // 위치 잡기 - requestAnimationFrame로 안정성 확보
+  requestAnimationFrame(() => {
     const btn = target.querySelector('.num-select-btn');
     const list = target.querySelector('.num-select-list');
-    if (btn && list) {
-      const rect = btn.getBoundingClientRect();
-      const listHeight = Math.min(window.innerHeight * 0.5, 400);
-      // 아래에 공간이 충분하면 아래로, 부족하면 위로
-      const spaceBelow = window.innerHeight - rect.bottom;
-      if (spaceBelow >= listHeight + 10 || rect.top < listHeight + 10) {
-        // 아래로 펼침
-        list.style.top = (rect.bottom + 4) + 'px';
-        list.style.bottom = 'auto';
+    if (!btn || !list) return;
+
+    const rect = btn.getBoundingClientRect();
+    const vh = window.innerHeight;
+    const vw = window.innerWidth;
+    // 일단 보이게 설정 후 실제 높이 측정
+    list.style.position = 'fixed';
+    list.style.top = '0px';
+    list.style.left = '0px';
+    list.style.display = 'block';
+    list.style.visibility = 'hidden';
+    const lh = list.getBoundingClientRect().height;
+    const lw = list.getBoundingClientRect().width;
+    list.style.visibility = '';
+
+    // 위/아래 공간 비교
+    const spaceBelow = vh - rect.bottom - 8;
+    const spaceAbove = rect.top - 8;
+    let top;
+    if (lh <= spaceBelow) {
+      top = rect.bottom + 4;
+    } else if (lh <= spaceAbove) {
+      top = rect.top - lh - 4;
+    } else {
+      // 둘 다 부족하면 더 큰 쪽에 맞춰서 표시
+      if (spaceBelow >= spaceAbove) {
+        top = rect.bottom + 4;
+        list.style.maxHeight = (spaceBelow - 4) + 'px';
       } else {
-        // 위로 펼침
-        list.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
-        list.style.top = 'auto';
+        top = 4;
+        list.style.maxHeight = (rect.top - 8) + 'px';
       }
-      list.style.left = rect.left + 'px';
-      list.style.minWidth = Math.max(rect.width, 200) + 'px';
     }
-  }
+
+    // 좌측 위치 조정 (화면 밖으로 안 나가도록)
+    let left = rect.left;
+    const maxLeft = vw - Math.min(lw, 280) - 8;
+    if (left > maxLeft) left = Math.max(8, maxLeft);
+
+    list.style.top = top + 'px';
+    list.style.left = left + 'px';
+    list.style.minWidth = Math.max(rect.width, 180) + 'px';
+  });
 }
 
 function selectDeviceNum(kind, el, ev) {
@@ -780,9 +827,15 @@ function selectDeviceNum(kind, el, ev) {
   }
   const num = el.dataset.num;
   if (!num) return;
-  document.getElementById(`${kind}_num`).value = num;
-  document.getElementById(`${kind}_numLabel`).textContent = num;
-  document.getElementById(`${kind}_numSelect`).classList.remove('open');
+  _suppressOutsideClick = true;
+  setTimeout(() => { _suppressOutsideClick = false; }, 300);
+
+  const numInput = document.getElementById(`${kind}_num`);
+  const numLabel = document.getElementById(`${kind}_numLabel`);
+  if (numInput) numInput.value = num;
+  if (numLabel) numLabel.textContent = num;
+  closeAllNumDropdowns();
+  toast('✓ ' + num + ' 선택됨');
 }
 
 function startEdit() { editing = true; renderInfo(); enforcePanelWidth(); }
