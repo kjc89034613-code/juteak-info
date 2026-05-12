@@ -188,9 +188,10 @@
   table.device-table td.date { color: #555; }
   table.device-table td.date-cell { padding: 3px; }
   table.device-table .cell-date {
-    width: 100%; padding: 4px 6px; border: 1px solid transparent;
-    border-radius: 3px; font-size: 12px; font-family: inherit;
+    width: 100%; padding: 4px 2px; border: 1px solid transparent;
+    border-radius: 3px; font-size: 11.5px; font-family: inherit;
     background: transparent; text-align: center;
+    box-sizing: border-box;
   }
   table.device-table .cell-date:hover {
     background: #fff; border-color: #cdd4e0;
@@ -223,6 +224,40 @@
     cursor: pointer;
   }
   table.device-table .btn-add:hover { background: #155a30; }
+
+  /* 번호 선택 커스텀 드롭다운 (내선/테블릿용) */
+  .num-select {
+    position: relative; width: 100%;
+  }
+  .num-select-btn {
+    width: 100%; padding: 5px 8px;
+    border: 1px solid #cdd4e0; border-radius: 4px; background: #fff;
+    cursor: pointer; font-size: 12px; font-family: inherit; color: #222;
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 4px; box-sizing: border-box;
+  }
+  .num-select-btn .arrow { color: #888; font-size: 10px; }
+  .num-select-list {
+    display: none; position: absolute; top: calc(100% + 4px); left: 0;
+    min-width: 100%; width: max-content; max-width: 90vw;
+    background: #fff; border: 1px solid #cdd4e0; border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    max-height: 60vh; overflow-y: auto; z-index: 50;
+    text-align: left;
+  }
+  .num-select.open .num-select-list { display: block; }
+  .num-select-item {
+    padding: 7px 12px; cursor: pointer; font-size: 13px;
+    border-bottom: 1px solid #f0f2f5; color: #333;
+    white-space: nowrap;
+  }
+  .num-select-item:last-child { border-bottom: 0; }
+  .num-select-item:hover:not(.disabled) { background: #f0f6ff; }
+  .num-select-item.disabled {
+    color: #aaa; cursor: not-allowed; background: #fafafa;
+  }
+  .num-select-item .muted { color: #999; font-size: 11.5px; }
+  .num-select-item .ok { color: #1d6e3d; font-size: 11.5px; font-weight: 600; }
 
   .add-row {
     padding: 10px; background: #f8faff; border-top: 1px solid #e6e9ef;
@@ -312,13 +347,19 @@
   }
   @media (max-width: 600px) {
     body { padding: 8px; }
-    h1 { font-size: 17px; }
-    .main-tabs button { font-size: 12px; padding: 7px 10px; }
+    h1 { font-size: 16px; margin: 0 0 8px; }
+    .main-tabs { margin-bottom: 8px; padding: 3px; }
+    .main-tabs button { font-size: 12px; padding: 6px 10px; }
+    .top-bar { margin-bottom: 8px; gap: 6px; }
+    .top-bar label { font-size: 12px; padding: 6px 10px; }
+    .sub-tabs { margin-bottom: 8px; padding: 4px; }
+    .sub-tabs button { font-size: 12px; padding: 8px 6px; }
     .top-bar select { font-size: 12px; padding: 8px; }
     .top-bar select option { font-size: 12px; }
-    .top-bar label { font-size: 12px; padding: 7px 10px; }
-    .custom-select-btn { font-size: 13px; padding: 9px 12px; }
+    .custom-select-btn { font-size: 12px; padding: 7px 10px; }
     .custom-select-item { font-size: 14px; padding: 6px 12px; }
+    .panel-head { padding: 8px 12px; font-size: 13px; }
+    .panel-footer { padding: 8px 10px; }
     table.info-table th { width: 42%; padding: 6px 7px; font-size: 12.5px; }
     table.info-table td { padding: 6px 7px; font-size: 12.5px; }
     table.device-table { font-size: 12px; }
@@ -647,35 +688,39 @@ function renderDevice(kind) {
     : `<tr class="empty-row"><td colspan="4">등록된 항목이 없습니다.</td></tr>`;
 
   // 모든 마스터 번호 표시 (사용중인 번호는 어느 현장인지 표시)
-  const opts = master.map(m => {
+  const optItems = master.map(m => {
     const usedAtSiteNo = usedMap[m.num];
     if (usedAtSiteNo) {
       const usedAt = sites.find(x => x.site_no === usedAtSiteNo);
       const usedLabel = usedAt ? (usedAt.group_name || ('현장'+usedAtSiteNo)) : ('현장'+usedAtSiteNo);
       const isMine = usedAtSiteNo === s.site_no;
-      return `<option value="${escapeHtml(m.num)}" disabled style="color:#aaa;">${escapeHtml(m.num)} (사용중: ${escapeHtml(usedLabel)}${isMine ? ' — 현재 현장' : ''})</option>`;
+      return `<div class="num-select-item disabled" data-num="">${escapeHtml(m.num)} <span class="muted">(사용중: ${escapeHtml(usedLabel)}${isMine ? ' — 현재' : ''})</span></div>`;
     }
-    return `<option value="${escapeHtml(m.num)}">${escapeHtml(m.num)} (미사용)</option>`;
+    return `<div class="num-select-item" data-num="${escapeHtml(m.num)}" onclick="selectDeviceNum('${kind}', this)">${escapeHtml(m.num)} <span class="ok">(미사용)</span></div>`;
   }).join('');
 
   body.innerHTML = `
     <table class="device-table">
       <thead>
         <tr>
-          <th style="width:22%;">번호</th>
-          <th style="width:25%;">발급일</th>
-          <th style="width:25%;">회수일</th>
-          <th style="width:28%;">관리</th>
+          <th style="width:18%;">번호</th>
+          <th style="width:31%;">발급일</th>
+          <th style="width:31%;">회수일</th>
+          <th style="width:20%;">관리</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
       <tfoot>
         <tr class="add-tr">
           <td>
-            <select id="${kind}_num" class="cell-select">
-              <option value="">-- 번호 --</option>
-              ${opts}
-            </select>
+            <div class="num-select" id="${kind}_numSelect">
+              <button type="button" class="num-select-btn" onclick="toggleNumDropdown('${kind}')">
+                <span id="${kind}_numLabel">번호</span>
+                <span class="arrow">▾</span>
+              </button>
+              <div class="num-select-list" id="${kind}_numList">${optItems}</div>
+            </div>
+            <input type="hidden" id="${kind}_num" value="">
           </td>
           <td></td>
           <td></td>
@@ -687,6 +732,27 @@ function renderDevice(kind) {
     </table>
   `;
 }
+
+function toggleNumDropdown(kind) {
+  document.querySelectorAll('.num-select').forEach(el => {
+    if (el.id === `${kind}_numSelect`) el.classList.toggle('open');
+    else el.classList.remove('open');
+  });
+}
+
+function selectDeviceNum(kind, el) {
+  const num = el.dataset.num;
+  $(`${kind}_num`).value = num;
+  $(`${kind}_numLabel`).textContent = num;
+  $(`${kind}_numSelect`).classList.remove('open');
+}
+
+// 번호 드롭다운 외부 클릭 시 닫기
+document.addEventListener('click', (e) => {
+  document.querySelectorAll('.num-select').forEach(el => {
+    if (!el.contains(e.target)) el.classList.remove('open');
+  });
+});
 
 function startEdit() { editing = true; renderInfo(); enforcePanelWidth(); }
 function cancelEdit() { editing = false; renderInfo(); enforcePanelWidth(); }
@@ -723,9 +789,9 @@ async function addDevice(kind, siteNo) {
     if (kind === 'ext') extensions.push(inserted);
     else tablets.push(inserted);
     renderDevice('ext'); renderDevice('tab'); renderMaster();
-    toast('✓ 추가되었습니다 (발급일/회수일은 행에서 직접 입력)');
+    toast('✓ 등록되었습니다 (발급일/회수일은 행에서 직접 입력)');
   } catch (e) {
-    toast('⚠️ 추가 실패: ' + (e.message || e));
+    toast('⚠️ 등록 실패: ' + (e.message || e));
   }
 }
 
