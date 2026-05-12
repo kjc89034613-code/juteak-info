@@ -34,7 +34,13 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 12px;
     display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
   }
-  .top-bar label { font-weight: 600; font-size: 14px; color: #555; }
+  .top-bar label {
+    background: #1f3a68; color: #fff;
+    padding: 8px 14px; border-radius: 6px;
+    font-weight: 700; font-size: 14px;
+    white-space: nowrap;
+    display: inline-flex; align-items: center;
+  }
   .top-bar select {
     flex: 1; min-width: 180px; padding: 9px 10px;
     border: 1px solid #cdd4e0; border-radius: 6px; font-size: 15px;
@@ -309,6 +315,7 @@
     .main-tabs button { font-size: 12px; padding: 7px 10px; }
     .top-bar select { font-size: 12px; padding: 8px; }
     .top-bar select option { font-size: 12px; }
+    .top-bar label { font-size: 12px; padding: 7px 10px; }
     .custom-select-btn { font-size: 12px; padding: 8px 10px; }
     .custom-select-item { font-size: 12px; padding: 8px 10px; }
     table.info-table th { width: 42%; padding: 6px 7px; font-size: 12.5px; }
@@ -331,10 +338,10 @@
 <!-- 탭 1: 주택전시관 정보 현황 -->
 <div id="tabContentInfo" class="tab-content active">
   <div class="top-bar">
-    <label for="siteSelectBtn">현장 선택:</label>
+    <label for="siteSelectBtn">주택전시관명</label>
     <div class="custom-select" id="customSelect">
       <button class="custom-select-btn" id="siteSelectBtn" onclick="toggleSiteDropdown()" type="button">
-        <span id="siteSelectLabel">-- 현장을 선택하세요 --</span>
+        <span id="siteSelectLabel">-- 주택전시관을 선택하세요 --</span>
         <span class="arrow">▾</span>
       </button>
       <div class="custom-select-list" id="siteSelectList"></div>
@@ -480,7 +487,7 @@ function renderSiteSelect() {
       $('siteSelectLabel').textContent = `${cur.group_name} - ${displayName}`;
     }
   } else {
-    $('siteSelectLabel').textContent = '-- 현장을 선택하세요 --';
+    $('siteSelectLabel').textContent = '-- 주택전시관을 선택하세요 --';
   }
 }
 
@@ -560,7 +567,7 @@ window.addEventListener('resize', () => {
 function renderInfo() {
   const body = $('infoBody');
   if (!currentSiteId) {
-    body.innerHTML = '<div style="padding:20px; color:#999; text-align:center;">현장을 선택하세요</div>';
+    body.innerHTML = '<div style="padding:20px; color:#999; text-align:center;">주택전시관을 선택하세요</div>';
     return;
   }
   const s = getSite(currentSiteId);
@@ -609,7 +616,7 @@ function renderDevice(kind) {
   const count = $(isExt ? 'extCount' : 'tabCount');
 
   if (!currentSiteId) {
-    body.innerHTML = '<div style="padding:20px; color:#999; text-align:center;">현장을 선택하세요</div>';
+    body.innerHTML = '<div style="padding:20px; color:#999; text-align:center;">주택전시관을 선택하세요</div>';
     count.textContent = '';
     return;
   }
