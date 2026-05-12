@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>주택전시관 현황 관리</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0; padding: 12px; background: #f4f6fa; color: #222;
+    -webkit-text-size-adjust: 100%;
+  }
+  h1 { margin: 0 0 12px; font-size: 20px; color: #1f3a68; }
+
+  .main-tabs {
+    display: inline-flex; gap: 4px; margin-bottom: 12px;
+    background: #fff; padding: 4px; border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .main-tabs button {
+    padding: 8px 14px; border: 0; background: transparent;
+    color: #6b7280; cursor: pointer; font-weight: 600; font-size: 13px;
+    border-radius: 5px; transition: all 0.15s;
+  }
+  .main-tabs button:hover { background: #f4f6fa; }
+  .main-tabs button.active { background: #1f3a68; color: #fff; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .top-bar {
+    background: #fff; padding: 12px; border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 12px;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  }
+  .top-bar label { font-weight: 600; font-size: 14px; color: #555; }
+  .top-bar select {
+    flex: 1; min-width: 180px; padding: 9px 10px;
+    border: 1px solid #cdd4e0; border-radius: 6px; font-size: 15px;
+    background: #fff;
+  }
+
+  .sub-tabs {
+    display: none;
+    gap: 4px; margin-bottom: 10px;
+    background: #fff; padding: 5px; border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .sub-tabs button {
+    flex: 1; padding: 10px 6px; border: 0; background: transparent;
+    color: #6b7280; cursor: pointer; font-weight: 600; font-size: 13px;
+    border-radius: 5px;
+  }
+  .sub-tabs button.active { background: #2e6bd9; color: #fff; }
+
+  /* 데스크탑: 가로 3단 (동일 폭) - 강제 */
+  .panels {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 12px !important;
+    align-items: start;
+    width: 100% !important;
+  }
+  .panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    background: #fff; border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    overflow: hidden;
+  }
+  .panel-body {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    padding: 0;
+  }
+  .panel-head {
+    padding: 10px 14px; color: #fff;
+    display: flex; justify-content: space-between; align-items: center;
+    font-weight: 600; font-size: 14px;
+    min-width: 0; max-width: 100%;
+    overflow: hidden;
+    gap: 8px;
+  }
+  .panel-head > span {
+    min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .panel-head.info { background: #1f3a68; }
+  .panel-head.ext  { background: #2e6bd9; }
+  .panel-head.tab  { background: #7c4dff; }
+  .panel-head .actions button {
+    padding: 4px 10px; border: 0; border-radius: 4px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    margin-left: 4px;
+  }
+  .panel-footer {
+    padding: 10px 12px; background: #f8faff; border-top: 1px solid #e6e9ef;
+    display: flex; justify-content: flex-end; gap: 6px;
+  }
+  .panel-footer button {
+    padding: 6px 14px; border: 0; border-radius: 4px;
+    font-size: 12.5px; font-weight: 600; cursor: pointer;
+  }
+  .btn-edit { background: #2e6bd9; color: #fff; }
+  .btn-edit:hover { background: #1f56b8; }
+  .btn-ghost-dark { background: #e6e9ef; color: #555; }
+  .btn-ghost-dark:hover { background: #d8dde6; }
+
+  table.info-table {
+    width: 100% !important; max-width: 100% !important;
+    border-collapse: collapse; font-size: 13.5px;
+    table-layout: fixed !important;
+  }
+  table.info-table th, table.info-table td {
+    border: 1px solid #e6e9ef; padding: 7px 10px; text-align: left;
+    vertical-align: middle;
+  }
+  table.info-table th {
+    background: #f4f6fa; color: #444; font-weight: 600;
+    width: 45%; white-space: normal; word-break: keep-all;
+    font-size: 12.5px;
+  }
+  table.info-table td {
+    background: #fff; word-break: break-all; min-height: 32px;
+  }
+  table.info-table td input, table.info-table td textarea {
+    width: 100%; padding: 5px 7px; border: 1px solid #cdd4e0;
+    border-radius: 4px; font-size: 13px; font-family: inherit;
+  }
+  table.info-table td textarea { resize: vertical; min-height: 50px; }
+  .empty-val { color: #bbb; }
+
+  table.device-table {
+    width: 100% !important; max-width: 100% !important;
+    border-collapse: collapse; font-size: 13px;
+    table-layout: fixed !important;
+  }
+  table.device-table th {
+    background: #f4f6fa; padding: 7px 6px; text-align: center;
+    border: 1px solid #e6e9ef; font-weight: 600;
+  }
+  table.device-table td {
+    padding: 6px; text-align: center; border: 1px solid #e6e9ef;
+    word-break: break-all; overflow: hidden;
+  }
+  table.device-table td.num { font-weight: 700; color: #1f3a68; }
+  table.device-table td.date { color: #555; }
+  table.device-table td.date-cell { padding: 3px; }
+  table.device-table .cell-date {
+    width: 100%; padding: 4px 6px; border: 1px solid transparent;
+    border-radius: 3px; font-size: 12px; font-family: inherit;
+    background: transparent; text-align: center;
+  }
+  table.device-table .cell-date:hover {
+    background: #fff; border-color: #cdd4e0;
+  }
+  table.device-table .cell-date:focus {
+    outline: none; background: #fff; border-color: #2e6bd9;
+  }
+  table.device-table .btn-x {
+    padding: 3px 9px; background: #d64545; color: #fff;
+    border: 0; border-radius: 3px; font-size: 11.5px; cursor: pointer;
+  }
+  .empty-row td { padding: 14px; color: #999; text-align: center; }
+
+  table.device-table tfoot td {
+    background: #f8faff; padding: 6px; border: 1px solid #e6e9ef;
+    text-align: center;
+  }
+  table.device-table .cell-select {
+    width: 100%; max-width: 100%;
+    padding: 5px 6px; border: 1px solid #cdd4e0;
+    border-radius: 4px; font-size: 12.5px; font-family: inherit;
+    background: #fff;
+    box-sizing: border-box;
+  }
+  table.device-table .btn-add {
+    padding: 3px 9px; background: #28a86b; color: #fff;
+    border: 0; border-radius: 3px; font-size: 11.5px; font-weight: 600;
+    cursor: pointer;
+  }
+  table.device-table .btn-add:hover { background: #1f8d57; }
+
+  .add-row {
+    padding: 10px; background: #f8faff; border-top: 1px solid #e6e9ef;
+    display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+  }
+  .add-row select, .add-row input {
+    padding: 6px 8px; border: 1px solid #cdd4e0; border-radius: 4px;
+    font-size: 12.5px;
+  }
+  .add-row select { flex: 1; min-width: 0; }
+  .add-row button {
+    padding: 6px 12px; background: #28a86b; color: #fff;
+    border: 0; border-radius: 4px; font-size: 12px; font-weight: 600;
+    cursor: pointer;
+  }
+
+  .btn-primary { background: #fff; color: #1f3a68; }
+  .btn-success { background: #28a86b; color: #fff; }
+  .btn-ghost   { background: rgba(255,255,255,0.25); color: #fff; }
+
+  .card {
+    background: #fff; border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: hidden;
+  }
+  .card-head {
+    padding: 12px 16px; background: #2f7d4b; color: #fff;
+    font-weight: 600; font-size: 16px;
+  }
+  .card-body { padding: 14px; }
+  .master-tabs {
+    display: inline-flex; gap: 4px; margin-bottom: 10px;
+    background: #fff; padding: 3px; border-radius: 6px;
+    border: 1px solid #e6e9ef;
+  }
+  .master-tabs button {
+    padding: 6px 12px; border: 0; background: transparent; color: #6b7280;
+    cursor: pointer; font-weight: 600; border-radius: 4px; font-size: 12.5px;
+  }
+  .master-tabs button:hover { background: #f4f6fa; }
+  .master-tabs button.active { background: #2f7d4b; color: #fff; }
+  .summary {
+    display: flex; gap: 12px; font-size: 12.5px; color: #555;
+    padding: 6px 0 10px; flex-wrap: wrap;
+  }
+  .summary strong { color: #1f3a68; font-weight: 700; }
+  .master-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 6px;
+  }
+  .master-cell {
+    padding: 8px 4px; text-align: center; border-radius: 5px;
+    font-size: 13px; font-weight: 600; border: 1px solid transparent;
+  }
+  .master-cell.used {
+    background: #d6eedd; color: #1d6e3d; border-color: #a4d5b6; cursor: pointer;
+  }
+  .master-cell.used:hover { background: #b8e3c5; }
+  .master-cell.unused {
+    background: #f3f4f6; color: #9ca3af; border-color: #e5e7eb;
+  }
+  .master-cell .info {
+    display: block; font-size: 10.5px; font-weight: 500;
+    opacity: 0.85; margin-top: 2px;
+  }
+
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: #333; color: #fff; padding: 10px 18px; border-radius: 6px;
+    font-size: 13px; opacity: 0; transition: opacity 0.3s; z-index: 200;
+    pointer-events: none; max-width: 90%; text-align: center;
+  }
+  .toast.show { opacity: 1; }
+
+  /* 모바일: 3단 해제 + 서브 탭 표시 */
+  @media (max-width: 900px) {
+    .panels {
+      display: block !important;
+      grid-template-columns: none !important;
+    }
+    .sub-tabs { display: flex; }
+    .panel {
+      display: none;
+      margin-bottom: 0;
+      width: 100% !important;
+    }
+    .panel.active { display: block; }
+  }
+  @media (max-width: 600px) {
+    body { padding: 8px; }
+    h1 { font-size: 17px; }
+    .main-tabs button { font-size: 12px; padding: 7px 10px; }
+    .top-bar select { font-size: 14px; }
+    table.info-table th { width: 42%; padding: 6px 7px; font-size: 12.5px; }
+    table.info-table td { padding: 6px 7px; font-size: 12.5px; }
+    table.device-table { font-size: 12px; }
+    .master-grid { grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 4px; }
+    .master-cell { font-size: 12px; padding: 6px 2px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>🏠 주택전시관 현황 관리</h1>
+
+<div class="main-tabs">
+  <button id="mainTabInfo" class="active" onclick="switchMainTab('info')">🏢 주택전시관 정보 현황</button>
+  <button id="mainTabDevice" onclick="switchMainTab('device')">📋 단말 현황</button>
+</div>
+
+<!-- 탭 1: 주택전시관 정보 현황 -->
+<div id="tabContentInfo" class="tab-content active">
+  <div class="top-bar">
+    <label for="siteSelect">현장 선택:</label>
+    <select id="siteSelect">
+      <option value="">-- 현장을 선택하세요 --</option>
+    </select>
+  </div>
+
+  <div class="sub-tabs">
+    <button id="subTabInfo" class="active" onclick="switchSubTab('info')">현황</button>
+    <button id="subTabExt" onclick="switchSubTab('ext')">내선전화</button>
+    <button id="subTabTab" onclick="switchSubTab('tab')">테블릿</button>
+  </div>
+
+  <div class="panels">
+    <div class="panel active" data-key="info">
+      <div class="panel-head info">
+        <span>📑 현황</span>
+      </div>
+      <div class="panel-body" id="infoBody"></div>
+    </div>
+    <div class="panel" data-key="ext">
+      <div class="panel-head ext">
+        <span>☎️ 내선전화</span>
+        <span id="extCount" style="font-size:12px; opacity:0.85;"></span>
+      </div>
+      <div class="panel-body" id="extBody"></div>
+    </div>
+    <div class="panel" data-key="tab">
+      <div class="panel-head tab">
+        <span>💻 테블릿</span>
+        <span id="tabCount" style="font-size:12px; opacity:0.85;"></span>
+      </div>
+      <div class="panel-body" id="tabBody"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 탭 2: 단말 현황 -->
+<div id="tabContentDevice" class="tab-content">
+  <div class="card">
+    <div class="card-body">
+      <div class="master-tabs">
+        <button id="mTabExt" class="active" onclick="switchMasterTab('ext')">☎️ 내선전화</button>
+        <button id="mTabTab" onclick="switchMasterTab('tab')">💻 테블릿</button>
+      </div>
+      <div class="summary" id="masterSummary"></div>
+      <div class="master-grid" id="masterGrid"></div>
+      <p style="margin-top:10px; font-size:11.5px; color:#888;">
+        ※ <span style="color:#1d6e3d; font-weight:700;">초록</span>=사용중,
+        <span style="color:#9ca3af;">회색</span>=미사용
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://pptrrnupppqcjnjxqafd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_McD4q2AbK1Rbq3Rmt2DbOA_JMBs7bnZ';
+const supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let sites = [], extensions = [], tablets = [], masterExt = [], masterTab = [];
+let currentSiteId = null;
+let editing = false;
+let masterActive = 'ext';
+
+const INFO_FIELDS = [
+  ['brand',       '브랜드명',                       false],
+  ['did',         'DID',                            false],
+  ['ext_group',   '내선그룹',                       false],
+  ['dnis',        'DNIS',                           false],
+  ['ip',          'IP',                             false],
+  ['rep_phone',   '주택전시관_대표번호',            false],
+  ['dcrm_name',   'DCRM_담당자명',                  false],
+  ['dcrm_mobile', 'DCRM_담당자_휴대폰',             false],
+  ['tax_name',    '세금계산서_담당자',              false],
+  ['tax_mobile',  '세금계산서_담당자_휴대폰',       false],
+  ['tax_email',   '세금계산서_담당자_메일주소',     false],
+  ['hongbo_addr', '홍보관_주소',                    true],
+  ['jeonsi_addr', '전시관_주소',                    true],
+];
+
+function $(id) { return document.getElementById(id); }
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+async function loadAll() {
+  try {
+    const [s, e, t, mE, mT] = await Promise.all([
+      supa.from('juteak_sites').select('*').order('site_no'),
+      supa.from('juteak_extensions').select('*').order('num'),
+      supa.from('juteak_tablets').select('*').order('num'),
+      supa.from('juteak_master_ext').select('*').order('num'),
+      supa.from('juteak_master_tab').select('*').order('num'),
+    ]);
+    if (s.error) throw s.error;
+    if (e.error) throw e.error;
+    if (t.error) throw t.error;
+    if (mE.error) throw mE.error;
+    if (mT.error) throw mT.error;
+    sites = s.data; extensions = e.data; tablets = t.data;
+    masterExt = mE.data; masterTab = mT.data;
+  } catch (err) {
+    console.error(err);
+    toast('⚠️ 데이터 로드 실패: ' + (err.message || err));
+  }
+}
+
+function renderSiteSelect() {
+  const sel = $('siteSelect');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">-- 현장을 선택하세요 --</option>';
+  for (const s of sites) {
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = `${s.group_name || ('현장 ' + s.site_no)} - ${s.house_name || ''} ${s.brand ? '('+s.brand+')' : ''}`;
+    sel.appendChild(opt);
+  }
+  if (prev) sel.value = prev;
+}
+
+function getSite(id) { return sites.find(s => s.id == id); }
+
+function renderAll() {
+  renderInfo();
+  renderDevice('ext');
+  renderDevice('tab');
+  enforcePanelWidth();
+}
+
+function enforcePanelWidth() {
+  if (window.innerWidth <= 900) return;
+  const apply = () => {
+    const panels = document.querySelectorAll('.panels .panel');
+    if (panels.length < 3) return;
+    const container = document.querySelector('.panels');
+    if (!container) return;
+    const cw = container.getBoundingClientRect().width;
+    const gap = 12;
+    const w = (cw - gap * 2) / 3;
+    panels.forEach(p => {
+      p.style.width = w + 'px';
+      p.style.maxWidth = w + 'px';
+      p.style.minWidth = w + 'px';
+      p.style.boxSizing = 'border-box';
+    });
+  };
+  // 즉시 한 번 + 다음 프레임에서 한 번 더 (DOM 안정화 후)
+  apply();
+  requestAnimationFrame(apply);
+  setTimeout(apply, 100);
+}
+
+// 창 크기 바뀌면 다시 동기화
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 900) {
+    document.querySelectorAll('.panels .panel').forEach(p => {
+      p.style.width = '';
+      p.style.maxWidth = '';
+      p.style.minWidth = '';
+    });
+    enforcePanelWidth();
+  } else {
+    // 모바일로 전환 시 인라인 스타일 제거
+    document.querySelectorAll('.panels .panel').forEach(p => {
+      p.style.width = '';
+      p.style.maxWidth = '';
+      p.style.minWidth = '';
+    });
+  }
+});
+
+function renderInfo() {
+  const body = $('infoBody');
+  if (!currentSiteId) {
+    body.innerHTML = '<div style="padding:20px; color:#999; text-align:center;">현장을 선택하세요</div>';
+    return;
+  }
+  const s = getSite(currentSiteId);
+  if (!s) return;
+
+  if (editing) {
+    body.innerHTML = `
+      <table class="info-table">
+        ${INFO_FIELDS.map(([k, l, multi]) => `
+          <tr>
+            <th>${escapeHtml(l)}</th>
+            <td>${multi
+              ? `<textarea data-f="${k}">${escapeHtml(s[k] || '')}</textarea>`
+              : `<input data-f="${k}" value="${escapeHtml(s[k] || '')}">`
+            }</td>
+          </tr>
+        `).join('')}
+      </table>
+      <div class="panel-footer">
+        <button class="btn-success" onclick="saveSite()">저장</button>
+        <button class="btn-ghost-dark" onclick="cancelEdit()">취소</button>
+      </div>
+    `;
+  } else {
+    body.innerHTML = `
+      <table class="info-table">
+        ${INFO_FIELDS.map(([k, l]) => `
+          <tr>
+            <th>${escapeHtml(l)}</th>
+            <td>${s[k] ? escapeHtml(s[k]) : '<span class="empty-val">—</span>'}</td>
+          </tr>
+        `).join('')}
+      </table>
+      <div class="panel-footer">
+        <button class="btn-edit" onclick="startEdit()">✏️ 수정</button>
+      </div>
+    `;
+  }
+}
+
+function renderDevice(kind) {
+  const isExt = kind === 'ext';
+  const items = isExt ? extensions : tablets;
+  const master = isExt ? masterExt : masterTab;
+  const body = $(isExt ? 'extBody' : 'tabBody');
+  const count = $(isExt ? 'extCount' : 'tabCount');
+
+  if (!currentSiteId) {
+    body.innerHTML = '<div style="padding:20px; color:#999; text-align:center;">현장을 선택하세요</div>';
+    count.textContent = '';
+    return;
+  }
+  const s = getSite(currentSiteId);
+  if (!s) return;
+  const list = items.filter(x => x.site_no === s.site_no);
+  count.textContent = `${list.length}개`;
+
+  // 사용중인 번호 → 어떤 현장에서 쓰는지 알기 위해 맵 생성
+  const usedMap = {};
+  for (const it of items) usedMap[it.num] = it.site_no;
+
+  const rows = list.length
+    ? list.map(it => `
+      <tr>
+        <td class="num">${escapeHtml(it.num)}</td>
+        <td class="date-cell">
+          <input type="date" class="cell-date" value="${escapeHtml(it.issued_date || '')}"
+            onchange="updateDeviceDate('${kind}', ${it.id}, 'issued_date', this.value)">
+        </td>
+        <td class="date-cell">
+          <input type="date" class="cell-date" value="${escapeHtml(it.returned_date || '')}"
+            onchange="updateDeviceDate('${kind}', ${it.id}, 'returned_date', this.value)">
+        </td>
+        <td><button class="btn-x" onclick="removeDevice('${kind}', ${it.id})">제거</button></td>
+      </tr>`).join('')
+    : `<tr class="empty-row"><td colspan="4">등록된 항목이 없습니다.</td></tr>`;
+
+  // 모든 마스터 번호 표시 (사용중인 번호는 어느 현장인지 표시)
+  const opts = master.map(m => {
+    const usedAtSiteNo = usedMap[m.num];
+    if (usedAtSiteNo) {
+      const usedAt = sites.find(x => x.site_no === usedAtSiteNo);
+      const usedLabel = usedAt ? (usedAt.group_name || ('현장'+usedAtSiteNo)) : ('현장'+usedAtSiteNo);
+      const isMine = usedAtSiteNo === s.site_no;
+      return `<option value="${escapeHtml(m.num)}" disabled style="color:#aaa;">${escapeHtml(m.num)} (사용중: ${escapeHtml(usedLabel)}${isMine ? ' — 현재 현장' : ''})</option>`;
+    }
+    return `<option value="${escapeHtml(m.num)}">${escapeHtml(m.num)} (미사용)</option>`;
+  }).join('');
+
+  body.innerHTML = `
+    <table class="device-table">
+      <thead>
+        <tr>
+          <th style="width:22%;">번호</th>
+          <th style="width:25%;">발급일</th>
+          <th style="width:25%;">회수일</th>
+          <th style="width:28%;">관리</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot>
+        <tr class="add-tr">
+          <td>
+            <select id="${kind}_num" class="cell-select">
+              <option value="">-- 번호 --</option>
+              ${opts}
+            </select>
+          </td>
+          <td></td>
+          <td></td>
+          <td>
+            <button class="btn-add" onclick="addDevice('${kind}', ${s.site_no})">+ 추가</button>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  `;
+}
+
+function startEdit() { editing = true; renderInfo(); enforcePanelWidth(); }
+function cancelEdit() { editing = false; renderInfo(); enforcePanelWidth(); }
+
+async function saveSite() {
+  const updates = {};
+  document.querySelectorAll('#infoBody [data-f]').forEach(el => {
+    updates[el.dataset.f] = el.value.trim();
+  });
+  updates.updated_at = new Date().toISOString();
+  try {
+    const { error } = await supa.from('juteak_sites').update(updates).eq('id', currentSiteId);
+    if (error) throw error;
+    const idx = sites.findIndex(s => s.id == currentSiteId);
+    if (idx >= 0) sites[idx] = { ...sites[idx], ...updates };
+    editing = false;
+    renderSiteSelect();
+    renderInfo();
+    toast('✓ 저장되었습니다');
+  } catch (e) {
+    toast('⚠️ 저장 실패: ' + (e.message || e));
+  }
+}
+
+async function addDevice(kind, siteNo) {
+  const num = $(`${kind}_num`).value.trim();
+  if (!num) { alert('번호를 선택하세요.'); return; }
+  const table = kind === 'ext' ? 'juteak_extensions' : 'juteak_tablets';
+  try {
+    const { data: inserted, error } = await supa
+      .from(table).insert({ site_no: siteNo, num })
+      .select().single();
+    if (error) throw error;
+    if (kind === 'ext') extensions.push(inserted);
+    else tablets.push(inserted);
+    renderDevice('ext'); renderDevice('tab'); renderMaster();
+    toast('✓ 추가되었습니다 (발급일/회수일은 행에서 직접 입력)');
+  } catch (e) {
+    toast('⚠️ 추가 실패: ' + (e.message || e));
+  }
+}
+
+async function removeDevice(kind, id) {
+  if (!confirm('이 항목을 제거하시겠습니까?')) return;
+  const table = kind === 'ext' ? 'juteak_extensions' : 'juteak_tablets';
+  try {
+    const { error } = await supa.from(table).delete().eq('id', id);
+    if (error) throw error;
+    if (kind === 'ext') extensions = extensions.filter(x => x.id !== id);
+    else tablets = tablets.filter(x => x.id !== id);
+    renderDevice('ext'); renderDevice('tab'); renderMaster();
+    toast('✓ 제거되었습니다');
+  } catch (e) {
+    toast('⚠️ 제거 실패: ' + (e.message || e));
+  }
+}
+
+async function updateDeviceDate(kind, id, field, value) {
+  const table = kind === 'ext' ? 'juteak_extensions' : 'juteak_tablets';
+  const newVal = value || null;
+  try {
+    const { error } = await supa.from(table).update({ [field]: newVal }).eq('id', id);
+    if (error) throw error;
+    const list = kind === 'ext' ? extensions : tablets;
+    const item = list.find(x => x.id === id);
+    if (item) item[field] = newVal;
+    toast('✓ 날짜가 저장되었습니다');
+  } catch (e) {
+    toast('⚠️ 저장 실패: ' + (e.message || e));
+  }
+}
+
+function switchMainTab(t) {
+  const isInfo = t === 'info';
+  $('mainTabInfo').classList.toggle('active', isInfo);
+  $('mainTabDevice').classList.toggle('active', !isInfo);
+  $('tabContentInfo').classList.toggle('active', isInfo);
+  $('tabContentDevice').classList.toggle('active', !isInfo);
+}
+
+function switchSubTab(key) {
+  $('subTabInfo').classList.toggle('active', key === 'info');
+  $('subTabExt').classList.toggle('active', key === 'ext');
+  $('subTabTab').classList.toggle('active', key === 'tab');
+  document.querySelectorAll('.panel').forEach(p => {
+    p.classList.toggle('active', p.dataset.key === key);
+  });
+}
+
+function switchMasterTab(t) {
+  masterActive = t;
+  $('mTabExt').classList.toggle('active', t === 'ext');
+  $('mTabTab').classList.toggle('active', t === 'tab');
+  renderMaster();
+}
+
+function renderMaster() {
+  const grid = $('masterGrid');
+  const summary = $('masterSummary');
+  const isExt = masterActive === 'ext';
+  const master = isExt ? masterExt : masterTab;
+  const usage = isExt ? extensions : tablets;
+  const usageMap = {};
+  for (const u of usage) (usageMap[u.num] = usageMap[u.num] || []).push(u.site_no);
+  const usedCount = master.filter(m => usageMap[m.num]).length;
+  summary.innerHTML = `
+    전체 <strong>${master.length}</strong>개
+    · 사용중 <strong style="color:#1d6e3d;">${usedCount}</strong>개
+    · 미사용 <strong style="color:#9ca3af;">${master.length - usedCount}</strong>개
+  `;
+  grid.innerHTML = master.map(m => {
+    const list = usageMap[m.num];
+    if (list) {
+      const names = list.map(no => {
+        const s = sites.find(x => x.site_no === no);
+        return s ? (s.group_name || ('현장'+no)) : ('현장'+no);
+      }).join(', ');
+      return `<div class="master-cell used" title="${escapeHtml(names)}" onclick="alert('${escapeHtml(m.num)} 사용중: ${escapeHtml(names)}')">
+        ${escapeHtml(m.num)}<span class="info">사용중</span>
+      </div>`;
+    }
+    return `<div class="master-cell unused">${escapeHtml(m.num)}<span class="info">미사용</span></div>`;
+  }).join('');
+}
+
+$('siteSelect').addEventListener('change', (e) => {
+  currentSiteId = e.target.value || null;
+  editing = false;
+  renderAll();
+});
+
+(async () => {
+  toast('데이터를 불러오는 중...');
+  await loadAll();
+  renderSiteSelect();
+  renderAll();
+  renderMaster();
+  enforcePanelWidth();
+  setTimeout(enforcePanelWidth, 300);
+  setTimeout(enforcePanelWidth, 800);
+  toast(`✓ ${sites.length}개 현장 로드 완료`);
+
+  const refresh = async () => {
+    if (editing) return;
+    await loadAll();
+    renderSiteSelect();
+    renderAll();
+    renderMaster();
+  };
+  supa.channel('juteak_changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'juteak_sites' }, refresh)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'juteak_extensions' }, refresh)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'juteak_tablets' }, refresh)
+    .subscribe();
+})();
+</script>
+</body>
+</html>
