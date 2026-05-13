@@ -504,12 +504,8 @@ function renderSiteSelect() {
   const list = $('siteSelectList');
   list.innerHTML = '';
   for (const s of sites) {
-    const name = s.house_name || '';
-    const brand = s.brand || '';
-    const displayName = (name && brand && name !== brand)
-      ? `${name} (${brand})`
-      : (brand || name);
-    const label = `${s.group_name || ('현장 ' + s.site_no)} - ${displayName}`;
+    const brand = s.brand || s.house_name || '';
+    const label = `${s.group_name || ('현장 ' + s.site_no)} - ${brand}`;
     const item = document.createElement('div');
     item.className = 'custom-select-item';
     item.textContent = label;
@@ -522,12 +518,8 @@ function renderSiteSelect() {
   if (currentSiteId) {
     const cur = sites.find(s => s.id == currentSiteId);
     if (cur) {
-      const name = cur.house_name || '';
-      const brand = cur.brand || '';
-      const displayName = (name && brand && name !== brand)
-        ? `${name} (${brand})`
-        : (brand || name);
-      $('siteSelectLabel').textContent = `${cur.group_name} - ${displayName}`;
+      const brand = cur.brand || cur.house_name || '';
+      $('siteSelectLabel').textContent = `${cur.group_name} - ${brand}`;
     }
   } else {
     $('siteSelectLabel').textContent = '-- 주택전시관을 선택하세요 --';
