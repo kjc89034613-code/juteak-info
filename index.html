@@ -570,6 +570,15 @@
     padding: 9px 6px;
   }
   table.device-table td.date-cell { padding: 4px 5px; }
+  table.device-table .date-wrap {
+    position: relative;
+    display: block;
+    width: 100%;
+    cursor: pointer;
+  }
+  table.device-table .date-short {
+    display: none;
+  }
   table.device-table .cell-date {
     width: 100%;
     padding: 5px 4px;
@@ -1019,11 +1028,59 @@
     table.info-table td input,
     table.info-table td textarea { font-size: 14px; padding: 7px 11px; }
     table.device-table { font-size: 14px; }
+    /* 모바일: 컬럼 폭 재배분 - 날짜 공간 확보 */
+    table.device-table colgroup col,
+    table.device-table thead th:nth-child(1) { width: 16% !important; }
+    table.device-table thead th:nth-child(2),
+    table.device-table thead th:nth-child(3) { width: 28% !important; }
+    table.device-table thead th:nth-child(4) { width: 28% !important; }
     table.device-table thead th { font-size: 14px; padding: 8px 4px; }
     table.device-table td { font-size: 14px; padding: 6px 4px; }
     table.device-table td.num { font-size: 14px; padding: 8px 4px; }
-    table.device-table td.date-cell { padding: 4px; }
-    table.device-table .cell-date { font-size: 13.5px; padding: 5px 4px; }
+    table.device-table td.date-cell { padding: 3px 2px; }
+    /* 모바일: input은 클릭 영역으로만 사용하고 시각적으로는 짧은 텍스트 표시 */
+    table.device-table .date-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 30px;
+      padding: 4px 2px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      transition: all 0.15s ease;
+    }
+    table.device-table .date-wrap:hover {
+      background: var(--surface);
+      border-color: var(--border-strong);
+    }
+    table.device-table .date-wrap:active,
+    table.device-table .date-wrap:focus-within {
+      background: var(--surface);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    table.device-table .date-short {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.04em;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    /* input은 보이지 않게 하되 클릭은 가능 */
+    table.device-table .cell-date {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      padding: 0;
+      border: 0;
+      cursor: pointer;
+      pointer-events: auto;
+    }
     table.device-table .btn-x { font-size: 12.5px; padding: 5px 11px; }
     table.device-table .btn-add { font-size: 12.5px; padding: 6px 13px; }
     .num-select-btn { font-size: 13px; padding: 7px 10px; }
@@ -1363,17 +1420,32 @@ function renderDevice(kind) {
   const usedMap = {};
   for (const it of items) usedMap[it.num] = it.site_no;
 
+  const fmtShort = (d) => {
+    if (!d) return '';
+    // YYYY-MM-DD → YY-MM-DD
+    const m = String(d).match(/^(\d{2})(\d{2})-(\d{2})-(\d{2})$/);
+    if (m) return `${m[2]}-${m[3]}-${m[4]}`;
+    return d;
+  };
+  window.fmtShortDate = fmtShort;
+
   const rows = list.length
     ? list.map(it => `
       <tr>
         <td class="num">${escapeHtml(it.num)}</td>
         <td class="date-cell">
-          <input type="date" class="cell-date${it.issued_date ? '' : ' is-empty'}" value="${escapeHtml(it.issued_date || '')}"
-            onchange="updateDeviceDate('${kind}', ${it.id}, 'issued_date', this.value); this.classList.toggle('is-empty', !this.value);">
+          <label class="date-wrap">
+            <input type="date" class="cell-date${it.issued_date ? '' : ' is-empty'}" value="${escapeHtml(it.issued_date || '')}"
+              onchange="updateDeviceDate('${kind}', ${it.id}, 'issued_date', this.value); this.classList.toggle('is-empty', !this.value); const s=this.parentNode.querySelector('.date-short'); if(s) s.textContent = (window.fmtShortDate||(v=>v))(this.value);">
+            <span class="date-short">${escapeHtml(fmtShort(it.issued_date))}</span>
+          </label>
         </td>
         <td class="date-cell">
-          <input type="date" class="cell-date${it.returned_date ? '' : ' is-empty'}" value="${escapeHtml(it.returned_date || '')}"
-            onchange="updateDeviceDate('${kind}', ${it.id}, 'returned_date', this.value); this.classList.toggle('is-empty', !this.value);">
+          <label class="date-wrap">
+            <input type="date" class="cell-date${it.returned_date ? '' : ' is-empty'}" value="${escapeHtml(it.returned_date || '')}"
+              onchange="updateDeviceDate('${kind}', ${it.id}, 'returned_date', this.value); this.classList.toggle('is-empty', !this.value); const s=this.parentNode.querySelector('.date-short'); if(s) s.textContent = (window.fmtShortDate||(v=>v))(this.value);">
+            <span class="date-short">${escapeHtml(fmtShort(it.returned_date))}</span>
+          </label>
         </td>
         <td><button class="btn-x" onclick="removeDevice('${kind}', ${it.id})">삭제</button></td>
       </tr>`).join('')
