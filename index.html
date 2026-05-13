@@ -5,98 +5,296 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>주택전시관 현황 관리</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
 <style>
-  * { box-sizing: border-box; }
-  body {
-    font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, BlinkMacSystemFont, sans-serif;
-    margin: 0; padding: 12px; background: #f4f6fa; color: #222;
-    -webkit-text-size-adjust: 100%;
-  }
-  h1 { margin: 0 0 12px; font-size: 20px; color: #1f3a68; }
+  :root {
+    /* Neutrals */
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --surface-muted: #f7f7f8;
+    --border: #ececef;
+    --border-strong: #d8d8dd;
+    --divider: #f2f2f4;
 
+    /* Text */
+    --text: #18181b;
+    --text-secondary: #52525b;
+    --text-muted: #a1a1aa;
+    --text-disabled: #d4d4d8;
+
+    /* Accent (indigo - 한 가지만 사용) */
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+    --accent-soft: #eef2ff;
+    --accent-border: #e0e7ff;
+
+    /* States */
+    --success: #16a34a;
+    --success-soft: #f0fdf4;
+    --success-border: #dcfce7;
+    --danger: #dc2626;
+    --danger-hover: #b91c1c;
+
+    /* Shadows - very subtle */
+    --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.04);
+    --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04);
+    --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.08);
+    --shadow-lg: 0 8px 24px rgba(16, 24, 40, 0.10);
+
+    /* Radius */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 12px;
+
+    /* Type */
+    --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-mono: 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    margin: 0;
+    padding: 24px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.55;
+    letter-spacing: -0.01em;
+  }
+
+  /* 페이지 헤더 */
+  .page-header {
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .page-header::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 3px;
+    background: linear-gradient(90deg, #4f46e5 0%, #c2410c 50%, #18181b 100%);
+    border-radius: 2px;
+  }
+  .header-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #18181b 0%, #3f3f46 100%);
+    color: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(24, 24, 27, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  .page-header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+  }
+
+  /* 메인 탭 (컬러 세그먼트) */
   .main-tabs {
-    display: inline-flex; gap: 4px; margin-bottom: 12px;
-    background: #fff; padding: 4px; border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    display: inline-flex;
+    gap: 4px;
+    margin-bottom: 22px;
+    background: var(--surface);
+    padding: 5px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-xs);
   }
   .main-tabs button {
-    padding: 8px 14px; border: 0; background: transparent;
-    color: #6b7280; cursor: pointer; font-weight: 600; font-size: 13px;
-    border-radius: 5px; transition: all 0.15s;
+    padding: 12px 26px;
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 16px;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+    font-family: inherit;
+    letter-spacing: -0.01em;
+    position: relative;
   }
-  .main-tabs button:hover { background: #f4f6fa; }
-  .main-tabs button.active { background: #1f3a68; color: #fff; }
+  .main-tabs button:hover {
+    color: var(--text);
+    background: var(--surface-muted);
+  }
+  .main-tabs button#mainTabInfo.active {
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+    color: var(--surface);
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+  }
+  .main-tabs button#mainTabDevice.active {
+    background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%);
+    color: var(--surface);
+    box-shadow: 0 2px 8px rgba(194, 65, 12, 0.30);
+  }
   .tab-content { display: none; }
   .tab-content.active { display: block; }
 
+  /* 상단 셀렉터 영역 */
   .top-bar {
-    margin-bottom: 12px;
-    padding-left: 4px;
-    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
   }
-  .top-bar label {
-    background: #1f3a68; color: #fff;
-    padding: 7px 12px; border-radius: 6px;
-    font-weight: 700; font-size: 13px;
-    white-space: nowrap;
-    display: inline-flex; align-items: center;
-  }
-  .top-bar select {
-    flex: 1; min-width: 180px; padding: 9px 10px;
-    border: 1px solid #cdd4e0; border-radius: 6px; font-size: 15px;
-    background: #fff;
+  .top-bar .label {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
   }
 
-  /* 커스텀 드롭다운 */
+  /* 커스텀 드롭다운 (주택전시관 선택) */
   .custom-select {
-    position: relative; display: inline-block;
+    position: relative;
+    display: inline-block;
+    flex: 1;
+    min-width: 240px;
+    max-width: 480px;
   }
   .custom-select-btn {
-    min-width: 200px; padding: 7px 12px;
-    border: 1px solid #cdd4e0; border-radius: 6px; font-size: 13px;
-    background: #fff; cursor: pointer; text-align: left;
-    display: flex; justify-content: space-between; align-items: center;
-    font-family: inherit; color: #222; gap: 8px;
+    width: 100%;
+    min-width: 240px;
+    padding: 11px 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    background: var(--surface);
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: inherit;
+    color: var(--text);
+    gap: 8px;
+    transition: all 0.15s ease;
+    font-weight: 600;
   }
-  .custom-select-btn:hover { border-color: #2e6bd9; }
+  .custom-select-btn:hover {
+    border-color: var(--text-muted);
+    background: var(--surface-muted);
+  }
+  .custom-select.open .custom-select-btn {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
   .custom-select-btn .arrow {
-    color: #888; font-size: 11px; margin-left: 6px; flex-shrink: 0;
+    color: var(--text-muted);
+    font-size: 10px;
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+  }
+  .custom-select.open .custom-select-btn .arrow {
+    transform: rotate(180deg);
   }
   .custom-select-list {
-    display: none; position: absolute; top: calc(100% + 4px); left: 0;
-    min-width: 100%; width: max-content; max-width: 90vw;
-    background: #fff; border: 1px solid #cdd4e0; border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-    max-height: 80vh; overflow-y: auto; z-index: 50;
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    min-width: 100%;
+    width: max-content;
+    max-width: 90vw;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    max-height: 60vh;
+    overflow-y: auto;
+    z-index: 50;
+    padding: 4px;
   }
   .custom-select.open .custom-select-list { display: block; }
   .custom-select-item {
-    padding: 9px 12px; cursor: pointer; font-size: 13px;
-    border-bottom: 1px solid #f0f2f5; color: #333;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 14.5px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-radius: 5px;
+    transition: background 0.1s ease;
+    font-weight: 500;
   }
-  .custom-select-item:last-child { border-bottom: 0; }
-  .custom-select-item:hover { background: #f0f6ff; }
-  .custom-select-item.selected { background: #e0ecff; color: #1f3a68; font-weight: 600; }
+  .custom-select-item:hover { background: var(--surface-muted); }
+  .custom-select-item.selected {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+  }
 
+  /* 서브 탭 (모바일에서만 표시) */
   .sub-tabs {
     display: none;
-    gap: 4px; margin-bottom: 10px;
-    background: #fff; padding: 5px; border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    gap: 4px;
+    margin-bottom: 14px;
+    background: var(--surface);
+    padding: 4px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-xs);
   }
   .sub-tabs button {
-    flex: 1; padding: 10px 6px; border: 0; background: transparent;
-    color: #6b7280; cursor: pointer; font-weight: 600; font-size: 13px;
-    border-radius: 5px;
+    flex: 1;
+    padding: 11px 8px;
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    transition: all 0.2s ease;
   }
-  .sub-tabs button.active { background: #2e6bd9; color: #fff; }
+  .sub-tabs button#subTabInfo.active {
+    background: linear-gradient(135deg, #18181b 0%, #3f3f46 100%);
+    color: var(--surface);
+    box-shadow: 0 2px 6px rgba(24, 24, 27, 0.18);
+  }
+  .sub-tabs button#subTabExt.active {
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+    color: var(--surface);
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.22);
+  }
+  .sub-tabs button#subTabTab.active {
+    background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%);
+    color: var(--surface);
+    box-shadow: 0 2px 6px rgba(194, 65, 12, 0.28);
+  }
 
-  /* 데스크탑: 가로 3단 (동일 폭) - 강제 */
+  /* 3단 패널 */
   .panels {
     display: grid !important;
     grid-template-columns: 1fr 1fr 1fr !important;
-    gap: 12px !important;
+    gap: 16px !important;
     align-items: start;
     width: 100% !important;
   }
@@ -105,234 +303,684 @@
     max-width: 100% !important;
     min-width: 0 !important;
     box-sizing: border-box !important;
-    background: #fff; border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
     overflow: hidden;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-xs);
   }
+  .panel:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-sm);
+  }
+
   .panel-body {
     width: 100% !important;
     max-width: 100% !important;
     overflow: hidden !important;
     padding: 0;
   }
+
+  /* 패널 헤더 - 모던 그라데이션 + 좌측 액센트 바 + 패턴 */
   .panel-head {
-    padding: 10px 14px; color: #fff;
-    display: flex; justify-content: space-between; align-items: center;
-    font-weight: 600; font-size: 14px;
-    min-width: 0; max-width: 100%;
+    padding: 16px 20px 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    font-size: 17px;
+    min-width: 0;
+    max-width: 100%;
     overflow: hidden;
     gap: 8px;
+    color: var(--surface);
+    letter-spacing: -0.015em;
+    position: relative;
+    min-height: 60px;
+    box-sizing: border-box;
   }
-  .panel-head > span {
-    min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  .panel-head::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background: rgba(255, 255, 255, 0.35);
   }
-  .panel-head.info { background: #1f3a68; }
-  .panel-head.ext  { background: #2e6bd9; }
-  .panel-head.tab  { background: #7c4dff; }
-  .panel-head .actions button {
-    padding: 4px 10px; border: 0; border-radius: 4px;
-    font-size: 12px; font-weight: 600; cursor: pointer;
-    margin-left: 4px;
+  .panel-head::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 100% 50%, rgba(255,255,255,0.12) 0%, transparent 50%),
+      radial-gradient(circle at 0% 100%, rgba(0,0,0,0.10) 0%, transparent 40%);
+    pointer-events: none;
   }
-  .panel-footer {
-    padding: 10px 12px; background: #f8faff; border-top: 1px solid #e6e9ef;
-    display: flex; justify-content: flex-end; gap: 6px;
+  .panel-head > span:first-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    z-index: 1;
+    padding-left: 4px;
   }
-  .panel-footer button {
-    padding: 6px 14px; border: 0; border-radius: 4px;
-    font-size: 12.5px; font-weight: 600; cursor: pointer;
+  .panel-head.info {
+    background: linear-gradient(120deg, #18181b 0%, #27272a 50%, #3f3f46 100%);
   }
-  .btn-edit { background: #2e6bd9; color: #fff; }
-  .btn-edit:hover { background: #1f56b8; }
-  .btn-ghost-dark { background: #e6e9ef; color: #555; }
-  .btn-ghost-dark:hover { background: #d8dde6; }
+  .panel-head.ext {
+    background: linear-gradient(120deg, #3730a3 0%, #4f46e5 50%, #6366f1 100%);
+  }
+  .panel-head.tab {
+    background: linear-gradient(120deg, #9a3412 0%, #c2410c 50%, #ea580c 100%);
+  }
 
+  .panel-head .count-badge {
+    font-size: 17px;
+    color: var(--text);
+    font-weight: 800;
+    background: #ffffff;
+    padding: 5px 16px;
+    border-radius: 14px;
+    border: 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.20), inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-mono);
+    letter-spacing: -0.02em;
+    min-width: 36px;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .panel-footer {
+    padding: 12px 16px;
+    background: var(--surface-muted);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  /* 버튼 시스템 */
+  button {
+    font-family: inherit;
+    letter-spacing: -0.01em;
+  }
+  .btn-primary {
+    padding: 8px 16px;
+    background: var(--text);
+    color: var(--surface);
+    border: 0;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .btn-primary:hover { background: #27272a; }
+
+  .btn-accent {
+    padding: 8px 16px;
+    background: var(--accent);
+    color: var(--surface);
+    border: 0;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .btn-accent:hover { background: var(--accent-hover); }
+
+  .btn-ghost {
+    padding: 8px 16px;
+    background: var(--surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .btn-ghost:hover {
+    background: var(--surface-muted);
+    color: var(--text);
+  }
+
+  /* 정보 테이블 */
   table.info-table {
-    width: 100% !important; max-width: 100% !important;
-    border-collapse: collapse; font-size: 13.5px;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-collapse: collapse;
+    font-size: 15px;
     table-layout: fixed !important;
   }
-  table.info-table th, table.info-table td {
-    border: 1px solid #e6e9ef; padding: 7px 10px; text-align: left;
+  table.info-table tr {
+    border-bottom: 1px solid var(--divider);
+  }
+  table.info-table tr:last-child { border-bottom: 0; }
+  table.info-table th,
+  table.info-table td {
+    padding: 9px 18px;
+    text-align: left;
     vertical-align: middle;
+    border: 0;
   }
   table.info-table th {
-    background: #f4f6fa; color: #444; font-weight: 600;
-    width: 45%; white-space: normal; word-break: keep-all;
-    font-size: 12.5px;
+    background: var(--surface-muted);
+    color: var(--text);
+    font-weight: 700;
+    width: 42%;
+    white-space: normal;
+    word-break: keep-all;
+    font-size: 14px;
+    letter-spacing: -0.01em;
+    border-right: 1px solid var(--border);
   }
   table.info-table td {
-    background: #fff; word-break: break-all; min-height: 32px;
+    background: var(--surface);
+    word-break: break-all;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 15px;
   }
-  table.info-table td input, table.info-table td textarea {
-    width: 100%; padding: 5px 7px; border: 1px solid #cdd4e0;
-    border-radius: 4px; font-size: 13px; font-family: inherit;
+  table.info-table td input,
+  table.info-table td textarea {
+    width: 100%;
+    padding: 7px 11px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--surface);
+    transition: all 0.15s ease;
+    font-weight: 500;
   }
-  table.info-table td textarea { resize: vertical; min-height: 50px; }
-  .empty-val { color: #bbb; }
+  table.info-table td input:focus,
+  table.info-table td textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  table.info-table td textarea {
+    resize: vertical;
+    min-height: 56px;
+    line-height: 1.5;
+  }
+  .empty-val { color: var(--text-disabled); }
 
+  /* 디바이스 테이블 */
   table.device-table {
-    width: 100% !important; max-width: 100% !important;
-    border-collapse: collapse; font-size: 13px;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-collapse: collapse;
+    font-size: 15px;
     table-layout: fixed !important;
   }
-  table.device-table th {
-    background: #f4f6fa; padding: 7px 6px; text-align: center;
-    border: 1px solid #e6e9ef; font-weight: 600;
+  table.device-table thead th {
+    background: var(--surface-muted);
+    padding: 9px 6px;
+    text-align: center;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  table.device-table tbody tr {
+    border-bottom: 1px solid var(--divider);
+    transition: background 0.1s ease;
+  }
+  table.device-table tbody tr:hover {
+    background: var(--surface-muted);
+  }
+  table.device-table tbody tr:hover td.num {
+    background: #ececef;
+  }
+  table.device-table tbody tr:last-child {
+    border-bottom: 1px solid var(--border);
   }
   table.device-table td {
-    padding: 6px; text-align: center; border: 1px solid #e6e9ef;
-    word-break: break-all; overflow: hidden;
+    padding: 6px 6px;
+    text-align: center;
+    border: 0;
+    word-break: break-all;
+    overflow: hidden;
+    vertical-align: middle;
+    font-weight: 700;
+    font-size: 15px;
   }
-  table.device-table td.num { font-weight: 700; color: #1f3a68; }
-  table.device-table td.date { color: #555; }
-  table.device-table td.date-cell { padding: 3px; }
+  table.device-table td.num {
+    font-weight: 700;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    background: var(--surface-muted);
+    border-right: 1px solid var(--border);
+    padding: 9px 6px;
+  }
+  table.device-table td.date-cell { padding: 4px 5px; }
   table.device-table .cell-date {
-    width: 100%; padding: 4px 2px; border: 1px solid transparent;
-    border-radius: 3px; font-size: 11.5px; font-family: inherit;
-    background: transparent; text-align: center;
+    width: 100%;
+    padding: 5px 4px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-size: 15px;
+    font-family: var(--font-mono);
+    background: transparent;
+    text-align: center;
     box-sizing: border-box;
+    color: var(--text);
+    transition: all 0.15s ease;
+    font-weight: 700;
+  }
+  /* 빈 날짜 값일 때 placeholder 텍스트 숨김 */
+  table.device-table .cell-date:not(:focus):invalid,
+  table.device-table .cell-date[value=""] {
+    color: transparent;
+  }
+  table.device-table .cell-date:focus { color: var(--text); }
+  /* 빈 input[type=date]의 placeholder 숨기기 (webkit) */
+  table.device-table .cell-date::-webkit-datetime-edit-text,
+  table.device-table .cell-date::-webkit-datetime-edit-month-field,
+  table.device-table .cell-date::-webkit-datetime-edit-day-field,
+  table.device-table .cell-date::-webkit-datetime-edit-year-field {
+    color: var(--text);
+    font-weight: 700;
+  }
+  table.device-table .cell-date.is-empty::-webkit-datetime-edit {
+    color: transparent;
+  }
+  table.device-table .cell-date.is-empty::-webkit-datetime-edit-text,
+  table.device-table .cell-date.is-empty::-webkit-datetime-edit-month-field,
+  table.device-table .cell-date.is-empty::-webkit-datetime-edit-day-field,
+  table.device-table .cell-date.is-empty::-webkit-datetime-edit-year-field {
+    color: transparent;
+  }
+  table.device-table .cell-date.is-empty:focus::-webkit-datetime-edit,
+  table.device-table .cell-date.is-empty:focus::-webkit-datetime-edit-text,
+  table.device-table .cell-date.is-empty:focus::-webkit-datetime-edit-month-field,
+  table.device-table .cell-date.is-empty:focus::-webkit-datetime-edit-day-field,
+  table.device-table .cell-date.is-empty:focus::-webkit-datetime-edit-year-field {
+    color: var(--text);
   }
   table.device-table .cell-date:hover {
-    background: #fff; border-color: #cdd4e0;
+    background: var(--surface);
+    border-color: var(--border-strong);
+    color: var(--text);
   }
   table.device-table .cell-date:focus {
-    outline: none; background: #fff; border-color: #2e6bd9;
+    outline: none;
+    background: var(--surface);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+    color: var(--text);
   }
   table.device-table .btn-x {
-    padding: 3px 9px; background: #d64545; color: #fff;
-    border: 0; border-radius: 3px; font-size: 11.5px; font-weight: 600;
+    padding: 6px 14px;
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 13.5px;
+    font-weight: 600;
     cursor: pointer;
+    transition: all 0.15s ease;
   }
-  table.device-table .btn-x:hover { background: #b53636; }
-  .empty-row td { padding: 14px; color: #999; text-align: center; }
+  table.device-table .btn-x:hover {
+    background: var(--danger);
+    color: var(--surface);
+    border-color: var(--danger);
+  }
+  .empty-row td {
+    padding: 36px 14px;
+    color: var(--text-muted);
+    text-align: center;
+    font-size: 14.5px;
+  }
 
   table.device-table tfoot td {
-    background: #f8faff; padding: 6px; border: 1px solid #e6e9ef;
+    background: var(--surface-muted);
+    padding: 8px 6px;
+    border: 0;
+    border-top: 1px solid var(--border);
     text-align: center;
   }
-  table.device-table .cell-select {
-    width: 100%; max-width: 100%;
-    padding: 5px 6px; border: 1px solid #cdd4e0;
-    border-radius: 4px; font-size: 12.5px; font-family: inherit;
-    background: #fff;
-    box-sizing: border-box;
-  }
   table.device-table .btn-add {
-    padding: 3px 9px; background: #1d6e3d; color: #fff;
-    border: 0; border-radius: 3px; font-size: 11.5px; font-weight: 600;
+    padding: 7px 16px;
+    background: var(--accent);
+    color: var(--surface);
+    border: 0;
+    border-radius: 4px;
+    font-size: 13.5px;
+    font-weight: 600;
     cursor: pointer;
+    transition: background 0.15s ease;
   }
-  table.device-table .btn-add:hover { background: #155a30; }
+  table.device-table .btn-add:hover { background: var(--accent-hover); }
 
-  /* 번호 선택 커스텀 드롭다운 (내선/테블릿용) */
+  /* 번호 선택 드롭다운 */
   .num-select {
-    position: relative; width: 100%;
+    position: relative;
+    width: 100%;
   }
   .num-select-btn {
-    width: 100%; padding: 5px 8px;
-    border: 1px solid #cdd4e0; border-radius: 4px; background: #fff;
-    cursor: pointer; font-size: 12px; font-family: inherit; color: #222;
-    display: flex; justify-content: space-between; align-items: center;
-    gap: 4px; box-sizing: border-box;
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    background: var(--surface);
+    cursor: pointer;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+    box-sizing: border-box;
+    transition: all 0.15s ease;
+    font-weight: 600;
   }
-  .num-select-btn .arrow { color: #888; font-size: 10px; }
+  .num-select-btn:hover { border-color: var(--text-muted); }
+  .num-select-btn .arrow { color: var(--text-muted); font-size: 9px; }
   .num-select-list {
-    display: none; position: fixed;
-    min-width: 120px; max-width: 90vw;
-    background: #fff; border: 1px solid #cdd4e0; border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    max-height: 50vh; overflow-y: auto;
+    display: none;
+    position: fixed;
+    min-width: 140px;
+    max-width: 90vw;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    max-height: 50vh;
+    overflow-y: auto;
     text-align: left;
     z-index: 99999;
+    padding: 4px;
   }
   .num-select.open .num-select-list { display: block !important; }
   .num-select-item {
-    padding: 10px 14px; cursor: pointer; font-size: 15px;
-    border-bottom: 1px solid #f0f2f5; color: #333;
-    white-space: nowrap;
-  }
-  .num-select-item:last-child { border-bottom: 0; }
-  .num-select-item:hover:not(.disabled) { background: #f0f6ff; }
-  .num-select-item.disabled {
-    color: #aaa; cursor: not-allowed; background: #fafafa;
-  }
-  .num-select-item .muted { color: #999; font-size: 13px; }
-  .num-select-item .ok { color: #1d6e3d; font-size: 13px; font-weight: 600; }
-
-  .add-row {
-    padding: 10px; background: #f8faff; border-top: 1px solid #e6e9ef;
-    display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
-  }
-  .add-row select, .add-row input {
-    padding: 6px 8px; border: 1px solid #cdd4e0; border-radius: 4px;
-    font-size: 12.5px;
-  }
-  .add-row select { flex: 1; min-width: 0; }
-  .add-row button {
-    padding: 6px 12px; background: #28a86b; color: #fff;
-    border: 0; border-radius: 4px; font-size: 12px; font-weight: 600;
+    padding: 10px 14px;
     cursor: pointer;
+    font-size: 14.5px;
+    color: var(--text);
+    white-space: nowrap;
+    border-radius: 5px;
+    transition: background 0.1s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .num-select-item:hover:not(.disabled) { background: var(--surface-muted); }
+  .num-select-item.disabled {
+    color: var(--text-disabled);
+    cursor: not-allowed;
+  }
+  .num-select-item .muted {
+    color: var(--text-muted);
+    font-size: 12.5px;
+    font-weight: 400;
+  }
+  .num-select-item .ok {
+    color: var(--success);
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  .num-select-item .num-text {
+    font-family: var(--font-mono);
+    font-weight: 700;
   }
 
-  .btn-primary { background: #fff; color: #1f3a68; }
-  .btn-success { background: #28a86b; color: #fff; }
-  .btn-ghost   { background: rgba(255,255,255,0.25); color: #fff; }
-
+  /* 단말 현황 (마스터) 카드 */
   .card {
-    background: #fff; border-radius: 10px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: hidden;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    overflow: hidden;
   }
-  .card-head {
-    padding: 12px 16px; background: #2f7d4b; color: #fff;
-    font-weight: 600; font-size: 16px;
-  }
-  .card-body { padding: 14px; }
+  .card-body { padding: 20px; }
+
   .master-tabs {
-    display: inline-flex; gap: 4px; margin-bottom: 10px;
-    background: #fff; padding: 3px; border-radius: 6px;
-    border: 1px solid #e6e9ef;
+    display: inline-flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    background: var(--surface-muted);
+    padding: 5px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
   }
   .master-tabs button {
-    padding: 6px 12px; border: 0; background: transparent; color: #6b7280;
-    cursor: pointer; font-weight: 600; border-radius: 4px; font-size: 12.5px;
+    padding: 12px 26px;
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-weight: 700;
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    letter-spacing: -0.01em;
   }
-  .master-tabs button:hover { background: #f4f6fa; }
-  .master-tabs button.active { background: #2f7d4b; color: #fff; }
+  .master-tabs button:hover { color: var(--text); }
+  .master-tabs button#mTabExt.active {
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+    color: var(--surface);
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.28);
+  }
+  .master-tabs button#mTabTab.active {
+    background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%);
+    color: var(--surface);
+    box-shadow: 0 2px 8px rgba(194, 65, 12, 0.30);
+  }
+
   .summary {
-    display: flex; gap: 12px; font-size: 12.5px; color: #555;
-    padding: 6px 0 10px; flex-wrap: wrap;
+    display: flex;
+    gap: 24px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    padding: 12px 0 20px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--divider);
+    margin-bottom: 20px;
   }
-  .summary strong { color: #1f3a68; font-weight: 700; }
+  .summary > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .summary strong {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 17px;
+    font-family: var(--font-mono);
+  }
+  .summary .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .summary .dot.total { background: var(--text); }
+  .summary .dot.used { background: var(--success); }
+  .summary .dot.unused { background: var(--text-disabled); }
+
   .master-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 6px;
-  }
-  .master-cell {
-    padding: 8px 4px; text-align: center; border-radius: 5px;
-    font-size: 13px; font-weight: 600; border: 1px solid transparent;
-  }
-  .master-cell.used {
-    background: #d6eedd; color: #1d6e3d; border-color: #a4d5b6; cursor: pointer;
-  }
-  .master-cell.used:hover { background: #b8e3c5; }
-  .master-cell.unused {
-    background: #f3f4f6; color: #9ca3af; border-color: #e5e7eb;
-  }
-  .master-cell .info {
-    display: block; font-size: 10.5px; font-weight: 500;
-    opacity: 0.85; margin-top: 2px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
   }
 
+  /* 브랜드 그룹 카드 */
+  .brand-group {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    overflow: hidden;
+    transition: all 0.15s ease;
+    box-shadow: var(--shadow-xs);
+  }
+  .brand-group:hover {
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+  }
+  .brand-group-head {
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand-group.used .brand-group-head {
+    background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+    color: #ffffff;
+    border-bottom-color: #15803d;
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+  }
+  .brand-group.unused .brand-group-head {
+    background: var(--surface-muted);
+    color: var(--text);
+    border-bottom-color: var(--border-strong);
+  }
+  .brand-group .brand-name {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1;
+  }
+  .brand-group .brand-count {
+    font-size: 14px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    padding: 2px 10px;
+    border-radius: 10px;
+    min-width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .brand-group.used .brand-count {
+    background: rgba(255, 255, 255, 0.95);
+    color: #15803d;
+  }
+  .brand-group.unused .brand-count {
+    background: var(--text);
+    color: var(--surface);
+  }
+  .brand-group-body {
+    padding: 12px 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    background: var(--surface);
+  }
+  .num-chip {
+    display: inline-block;
+    padding: 8px 14px;
+    border-radius: 7px;
+    font-family: var(--font-mono);
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    border: 1.5px solid var(--border);
+    background: var(--surface-muted);
+    color: var(--text);
+    line-height: 1.1;
+  }
+  .brand-group.used .num-chip {
+    background: #f0fdf4;
+    border-color: #86efac;
+    color: #14532d;
+  }
+  .brand-group.unused .num-chip {
+    background: var(--surface);
+    border-color: var(--border-strong);
+    color: var(--text);
+  }
+
+  .legend {
+    margin-top: 18px;
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .legend > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .legend .swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+  }
+  .legend .swatch.used {
+    background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+    border-color: #15803d;
+  }
+  .legend .swatch.unused { background: var(--surface); }
+
+  /* 빈 상태 */
+  .empty-state {
+    padding: 48px 20px;
+    color: var(--text-muted);
+    text-align: center;
+    font-size: 14px;
+  }
+  .empty-state-icon {
+    font-size: 32px;
+    opacity: 0.5;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  /* 토스트 */
   .toast {
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-    background: #333; color: #fff; padding: 10px 18px; border-radius: 6px;
-    font-size: 13px; opacity: 0; transition: opacity 0.3s; z-index: 200;
-    pointer-events: none; max-width: 90%; text-align: center;
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    background: var(--text);
+    color: var(--surface);
+    padding: 12px 22px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.25s ease;
+    z-index: 200;
+    pointer-events: none;
+    max-width: 90%;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
   }
-  .toast.show { opacity: 1; }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 
-  /* 모바일: 3단 해제 + 서브 탭 표시 */
+  /* 모바일 */
   @media (max-width: 900px) {
     .panels {
       display: block !important;
@@ -347,44 +995,74 @@
     .panel.active { display: block; }
   }
   @media (max-width: 600px) {
-    body { padding: 8px; }
-    h1 { font-size: 16px; margin: 0 0 8px; }
-    .main-tabs { margin-bottom: 8px; padding: 3px; }
-    .main-tabs button { font-size: 12px; padding: 6px 10px; }
-    .top-bar { margin-bottom: 8px; gap: 6px; }
-    .top-bar label { font-size: 12px; padding: 6px 10px; }
-    .sub-tabs { margin-bottom: 8px; padding: 4px; }
-    .sub-tabs button { font-size: 12px; padding: 8px 6px; }
-    .top-bar select { font-size: 12px; padding: 8px; }
-    .top-bar select option { font-size: 12px; }
-    .custom-select-btn { font-size: 12px; padding: 7px 10px; }
-    .custom-select-item { font-size: 14px; padding: 6px 12px; }
-    .panel-head { padding: 8px 12px; font-size: 13px; }
-    .panel-footer { padding: 8px 10px; }
-    table.info-table th { width: 42%; padding: 6px 7px; font-size: 12.5px; }
-    table.info-table td { padding: 6px 7px; font-size: 12.5px; }
-    table.device-table { font-size: 12px; }
-    .master-grid { grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 4px; }
-    .master-cell { font-size: 12px; padding: 6px 2px; }
+    body { padding: 14px; font-size: 14.5px; }
+    .page-header { margin-bottom: 18px; gap: 10px; padding-bottom: 14px; }
+    .page-header::after { height: 2.5px; }
+    .header-badge { width: 36px; height: 36px; border-radius: 9px; }
+    .header-badge svg { width: 20px; height: 20px; }
+    .page-header h1 { font-size: 21px; }
+    .main-tabs { margin-bottom: 16px; }
+    .main-tabs button { font-size: 14.5px; padding: 10px 18px; }
+    .master-tabs { margin-bottom: 16px; }
+    .master-tabs button { font-size: 14.5px; padding: 10px 18px; }
+    .top-bar { margin-bottom: 14px; gap: 8px; }
+    .top-bar .label { font-size: 14px; }
+    .custom-select { min-width: 100%; }
+    .custom-select-btn { font-size: 14px; padding: 10px 14px; }
+    .sub-tabs { margin-bottom: 12px; }
+    .sub-tabs button { font-size: 13px; padding: 10px 6px; }
+    .panel-head { padding: 14px 16px 14px 20px; font-size: 15.5px; min-height: 54px; }
+    .panel-head .count-badge { font-size: 15px; padding: 4px 13px; min-width: 32px; }
+    .panel-footer { padding: 10px 12px; }
+    table.info-table th { width: 40%; padding: 8px 13px; font-size: 13px; }
+    table.info-table td { padding: 8px 13px; font-size: 14px; }
+    table.info-table td input,
+    table.info-table td textarea { font-size: 14px; padding: 7px 11px; }
+    table.device-table { font-size: 14px; }
+    table.device-table thead th { font-size: 14px; padding: 8px 4px; }
+    table.device-table td { font-size: 14px; padding: 6px 4px; }
+    table.device-table td.num { font-size: 14px; padding: 8px 4px; }
+    table.device-table td.date-cell { padding: 4px; }
+    table.device-table .cell-date { font-size: 13.5px; padding: 5px 4px; }
+    table.device-table .btn-x { font-size: 12.5px; padding: 5px 11px; }
+    table.device-table .btn-add { font-size: 12.5px; padding: 6px 13px; }
+    .num-select-btn { font-size: 13px; padding: 7px 10px; }
+    .card-body { padding: 16px; }
+    .master-grid { grid-template-columns: 1fr; gap: 10px; }
+    .brand-group-head { padding: 9px 12px; }
+    .brand-group .brand-name { font-size: 14px; }
+    .brand-group .brand-count { font-size: 13px; padding: 2px 9px; }
+    .brand-group-body { padding: 11px 12px; gap: 7px; }
+    .num-chip { font-size: 16px; padding: 7px 12px; }
+    .summary { gap: 16px; font-size: 13px; padding: 8px 0 16px; margin-bottom: 16px; }
+    .summary strong { font-size: 15px; }
   }
 </style>
 </head>
 <body>
 
-<h1>🏠 주택전시관 현황 관리</h1>
+<div class="page-header">
+  <div class="header-badge">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      <polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+  </div>
+  <h1>주택전시관 현황 관리</h1>
+</div>
 
 <div class="main-tabs">
-  <button id="mainTabInfo" class="active" onclick="switchMainTab('info')">🏢 주택전시관 정보 현황</button>
-  <button id="mainTabDevice" onclick="switchMainTab('device')">📋 단말 현황</button>
+  <button id="mainTabInfo" class="active" onclick="switchMainTab('info')">현장 정보</button>
+  <button id="mainTabDevice" onclick="switchMainTab('device')">단말 현황</button>
 </div>
 
 <!-- 탭 1: 주택전시관 정보 현황 -->
 <div id="tabContentInfo" class="tab-content active">
   <div class="top-bar">
-    <label for="siteSelectBtn">주택전시관명</label>
+    <span class="label">주택전시관</span>
     <div class="custom-select" id="customSelect">
       <button class="custom-select-btn" id="siteSelectBtn" onclick="toggleSiteDropdown()" type="button">
-        <span id="siteSelectLabel">-- 주택전시관을 선택하세요 --</span>
+        <span id="siteSelectLabel">주택전시관을 선택하세요</span>
         <span class="arrow">▾</span>
       </button>
       <div class="custom-select-list" id="siteSelectList"></div>
@@ -400,21 +1078,21 @@
   <div class="panels">
     <div class="panel active" data-key="info">
       <div class="panel-head info">
-        <span>📑 현황</span>
+        <span>현황</span>
       </div>
       <div class="panel-body" id="infoBody"></div>
     </div>
     <div class="panel" data-key="ext">
       <div class="panel-head ext">
-        <span>☎️ 내선전화</span>
-        <span id="extCount" style="font-size:12px; opacity:0.85;"></span>
+        <span>내선전화</span>
+        <span id="extCount" class="count-badge"></span>
       </div>
       <div class="panel-body" id="extBody"></div>
     </div>
     <div class="panel" data-key="tab">
       <div class="panel-head tab">
-        <span>💻 테블릿</span>
-        <span id="tabCount" style="font-size:12px; opacity:0.85;"></span>
+        <span>테블릿</span>
+        <span id="tabCount" class="count-badge"></span>
       </div>
       <div class="panel-body" id="tabBody"></div>
     </div>
@@ -426,15 +1104,15 @@
   <div class="card">
     <div class="card-body">
       <div class="master-tabs">
-        <button id="mTabExt" class="active" onclick="switchMasterTab('ext')">☎️ 내선전화</button>
-        <button id="mTabTab" onclick="switchMasterTab('tab')">💻 테블릿</button>
+        <button id="mTabExt" class="active" onclick="switchMasterTab('ext')">내선전화</button>
+        <button id="mTabTab" onclick="switchMasterTab('tab')">테블릿</button>
       </div>
       <div class="summary" id="masterSummary"></div>
       <div class="master-grid" id="masterGrid"></div>
-      <p style="margin-top:10px; font-size:11.5px; color:#888;">
-        ※ <span style="color:#1d6e3d; font-weight:700;">초록</span>=사용중,
-        <span style="color:#9ca3af;">회색</span>=미사용
-      </p>
+      <div class="legend">
+        <span><span class="swatch used"></span>사용중</span>
+        <span><span class="swatch unused"></span>미사용</span>
+      </div>
     </div>
   </div>
 </div>
@@ -457,14 +1135,14 @@ const INFO_FIELDS = [
   ['ext_group',   '내선그룹',                       false],
   ['dnis',        'DNIS',                           false],
   ['ip',          'IP',                             false],
-  ['rep_phone',   '주택전시관_대표번호',            false],
-  ['dcrm_name',   'DCRM_담당자',                    false],
-  ['dcrm_mobile', 'DCRM_담당자_HP',                 false],
-  ['tax_name',    '계산서_담당자',                  false],
-  ['tax_mobile',  '계산서_담당자_HP',               false],
-  ['tax_email',   '계산서_담당자_메일',             false],
-  ['hongbo_addr', '홍보관_주소',                    true],
-  ['jeonsi_addr', '전시관_주소',                    true],
+  ['rep_phone',   '주택전시관 대표번호',            false],
+  ['dcrm_name',   'DCRM 담당자',                    false],
+  ['dcrm_mobile', 'DCRM 담당자 HP',                 false],
+  ['tax_name',    '계산서 담당자',                  false],
+  ['tax_mobile',  '계산서 담당자 HP',               false],
+  ['tax_email',   '계산서 담당자 메일',             false],
+  ['hongbo_addr', '홍보관 주소',                    true],
+  ['jeonsi_addr', '전시관 주소',                    true],
 ];
 
 function $(id) { return document.getElementById(id); }
@@ -496,7 +1174,7 @@ async function loadAll() {
     masterExt = mE.data; masterTab = mT.data;
   } catch (err) {
     console.error(err);
-    toast('⚠️ 데이터 로드 실패: ' + (err.message || err));
+    toast('데이터 로드 실패: ' + (err.message || err));
   }
 }
 
@@ -505,7 +1183,7 @@ function renderSiteSelect() {
   list.innerHTML = '';
   for (const s of sites) {
     const brand = s.brand || s.house_name || '';
-    const label = `${s.group_name || ('현장 ' + s.site_no)} - ${brand}`;
+    const label = `${s.group_name || ('현장 ' + s.site_no)} — ${brand}`;
     const item = document.createElement('div');
     item.className = 'custom-select-item';
     item.textContent = label;
@@ -514,15 +1192,14 @@ function renderSiteSelect() {
     item.onclick = () => selectSite(s.id, label);
     list.appendChild(item);
   }
-  // 선택된 현장의 라벨 갱신
   if (currentSiteId) {
     const cur = sites.find(s => s.id == currentSiteId);
     if (cur) {
       const brand = cur.brand || cur.house_name || '';
-      $('siteSelectLabel').textContent = `${cur.group_name} - ${brand}`;
+      $('siteSelectLabel').textContent = `${cur.group_name} — ${brand}`;
     }
   } else {
-    $('siteSelectLabel').textContent = '-- 주택전시관을 선택하세요 --';
+    $('siteSelectLabel').textContent = '주택전시관을 선택하세요';
   }
 }
 
@@ -535,7 +1212,6 @@ function selectSite(id, label) {
   editing = false;
   $('siteSelectLabel').textContent = label;
   $('customSelect').classList.remove('open');
-  // 선택 강조
   document.querySelectorAll('.custom-select-item').forEach(it => {
     it.classList.toggle('selected', it.dataset.id == id);
   });
@@ -555,7 +1231,6 @@ function closeAllNumDropdowns() {
   });
 }
 
-// 드롭다운 외부 클릭 시 닫기 (주택전시관명 + 번호 모두)
 let _suppressOutsideClick = false;
 
 function handleOutsideClick(e) {
@@ -585,7 +1260,7 @@ function enforcePanelWidth() {
     const container = document.querySelector('.panels');
     if (!container) return;
     const cw = container.getBoundingClientRect().width;
-    const gap = 12;
+    const gap = 16;
     const w = (cw - gap * 2) / 3;
     panels.forEach(p => {
       p.style.width = w + 'px';
@@ -594,13 +1269,11 @@ function enforcePanelWidth() {
       p.style.boxSizing = 'border-box';
     });
   };
-  // 즉시 한 번 + 다음 프레임에서 한 번 더 (DOM 안정화 후)
   apply();
   requestAnimationFrame(apply);
   setTimeout(apply, 100);
 }
 
-// 창 크기 바뀌면 다시 동기화
 window.addEventListener('resize', () => {
   if (window.innerWidth > 900) {
     document.querySelectorAll('.panels .panel').forEach(p => {
@@ -610,7 +1283,6 @@ window.addEventListener('resize', () => {
     });
     enforcePanelWidth();
   } else {
-    // 모바일로 전환 시 인라인 스타일 제거
     document.querySelectorAll('.panels .panel').forEach(p => {
       p.style.width = '';
       p.style.maxWidth = '';
@@ -622,7 +1294,11 @@ window.addEventListener('resize', () => {
 function renderInfo() {
   const body = $('infoBody');
   if (!currentSiteId) {
-    body.innerHTML = '<div style="padding:20px; color:#999; text-align:center;">주택전시관을 선택하세요</div>';
+    body.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-state-icon">○</span>
+        주택전시관을 선택하세요
+      </div>`;
     return;
   }
   const s = getSite(currentSiteId);
@@ -642,8 +1318,8 @@ function renderInfo() {
         `).join('')}
       </table>
       <div class="panel-footer">
-        <button class="btn-success" onclick="saveSite()">저장</button>
-        <button class="btn-ghost-dark" onclick="cancelEdit()">취소</button>
+        <button class="btn-ghost" onclick="cancelEdit()">취소</button>
+        <button class="btn-primary" onclick="saveSite()">저장</button>
       </div>
     `;
   } else {
@@ -657,7 +1333,7 @@ function renderInfo() {
         `).join('')}
       </table>
       <div class="panel-footer">
-        <button class="btn-edit" onclick="startEdit()">수정</button>
+        <button class="btn-accent" onclick="startEdit()">수정</button>
       </div>
     `;
   }
@@ -671,16 +1347,19 @@ function renderDevice(kind) {
   const count = $(isExt ? 'extCount' : 'tabCount');
 
   if (!currentSiteId) {
-    body.innerHTML = '<div style="padding:20px; color:#999; text-align:center;">주택전시관을 선택하세요</div>';
+    body.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-state-icon">○</span>
+        주택전시관을 선택하세요
+      </div>`;
     count.textContent = '';
     return;
   }
   const s = getSite(currentSiteId);
   if (!s) return;
   const list = items.filter(x => x.site_no === s.site_no);
-  count.textContent = `${list.length}개`;
+  count.textContent = `${list.length}`;
 
-  // 사용중인 번호 → 어떤 현장에서 쓰는지 알기 위해 맵 생성
   const usedMap = {};
   for (const it of items) usedMap[it.num] = it.site_no;
 
@@ -689,36 +1368,35 @@ function renderDevice(kind) {
       <tr>
         <td class="num">${escapeHtml(it.num)}</td>
         <td class="date-cell">
-          <input type="date" class="cell-date" value="${escapeHtml(it.issued_date || '')}"
-            onchange="updateDeviceDate('${kind}', ${it.id}, 'issued_date', this.value)">
+          <input type="date" class="cell-date${it.issued_date ? '' : ' is-empty'}" value="${escapeHtml(it.issued_date || '')}"
+            onchange="updateDeviceDate('${kind}', ${it.id}, 'issued_date', this.value); this.classList.toggle('is-empty', !this.value);">
         </td>
         <td class="date-cell">
-          <input type="date" class="cell-date" value="${escapeHtml(it.returned_date || '')}"
-            onchange="updateDeviceDate('${kind}', ${it.id}, 'returned_date', this.value)">
+          <input type="date" class="cell-date${it.returned_date ? '' : ' is-empty'}" value="${escapeHtml(it.returned_date || '')}"
+            onchange="updateDeviceDate('${kind}', ${it.id}, 'returned_date', this.value); this.classList.toggle('is-empty', !this.value);">
         </td>
         <td><button class="btn-x" onclick="removeDevice('${kind}', ${it.id})">삭제</button></td>
       </tr>`).join('')
-    : `<tr class="empty-row"><td colspan="4">등록된 항목이 없습니다.</td></tr>`;
+    : `<tr class="empty-row"><td colspan="4">등록된 항목이 없습니다</td></tr>`;
 
-  // 모든 마스터 번호 표시 (사용중인 번호는 어느 현장인지 표시)
   const optItems = master.map(m => {
     const usedAtSiteNo = usedMap[m.num];
     if (usedAtSiteNo) {
       const usedAt = sites.find(x => x.site_no === usedAtSiteNo);
       const usedLabel = usedAt ? (usedAt.group_name || ('현장'+usedAtSiteNo)) : ('현장'+usedAtSiteNo);
       const isMine = usedAtSiteNo === s.site_no;
-      return `<div class="num-select-item disabled" data-num="">${escapeHtml(m.num)} <span class="muted">(사용중: ${escapeHtml(usedLabel)}${isMine ? ' — 현재' : ''})</span></div>`;
+      return `<div class="num-select-item disabled" data-num=""><span class="num-text">${escapeHtml(m.num)}</span><span class="muted">사용중 · ${escapeHtml(usedLabel)}${isMine ? ' (현재)' : ''}</span></div>`;
     }
-    return `<div class="num-select-item" data-num="${escapeHtml(m.num)}" onclick="selectDeviceNum('${kind}', this, event)">${escapeHtml(m.num)} <span class="ok">(미사용)</span></div>`;
+    return `<div class="num-select-item" data-num="${escapeHtml(m.num)}" onclick="selectDeviceNum('${kind}', this, event)"><span class="num-text">${escapeHtml(m.num)}</span><span class="ok">미사용</span></div>`;
   }).join('');
 
   body.innerHTML = `
     <table class="device-table">
       <thead>
         <tr>
-          <th style="width:18%;">번호</th>
-          <th style="width:31%;">발급일</th>
-          <th style="width:31%;">회수일</th>
+          <th style="width:20%;">번호</th>
+          <th style="width:30%;">발급일</th>
+          <th style="width:30%;">회수일</th>
           <th style="width:20%;">관리</th>
         </tr>
       </thead>
@@ -754,7 +1432,6 @@ function toggleNumDropdown(kind, ev) {
   const target = document.getElementById(`${kind}_numSelect`);
   if (!target) return;
   const isOpen = target.classList.contains('open');
-  // 모든 드롭다운 닫기 (인라인 스타일도 정리)
   closeAllNumDropdowns();
   if (isOpen) return;
 
@@ -763,7 +1440,6 @@ function toggleNumDropdown(kind, ev) {
 
   target.classList.add('open');
 
-  // 위치 잡기 - requestAnimationFrame로 안정성 확보
   requestAnimationFrame(() => {
     const btn = target.querySelector('.num-select-btn');
     const list = target.querySelector('.num-select-list');
@@ -772,7 +1448,6 @@ function toggleNumDropdown(kind, ev) {
     const rect = btn.getBoundingClientRect();
     const vh = window.innerHeight;
     const vw = window.innerWidth;
-    // 일단 보이게 설정 후 실제 높이 측정
     list.style.position = 'fixed';
     list.style.top = '0px';
     list.style.left = '0px';
@@ -782,7 +1457,6 @@ function toggleNumDropdown(kind, ev) {
     const lw = list.getBoundingClientRect().width;
     list.style.visibility = '';
 
-    // 위/아래 공간 비교
     const spaceBelow = vh - rect.bottom - 8;
     const spaceAbove = rect.top - 8;
     let top;
@@ -791,7 +1465,6 @@ function toggleNumDropdown(kind, ev) {
     } else if (lh <= spaceAbove) {
       top = rect.top - lh - 4;
     } else {
-      // 둘 다 부족하면 더 큰 쪽에 맞춰서 표시
       if (spaceBelow >= spaceAbove) {
         top = rect.bottom + 4;
         list.style.maxHeight = (spaceBelow - 4) + 'px';
@@ -801,14 +1474,13 @@ function toggleNumDropdown(kind, ev) {
       }
     }
 
-    // 좌측 위치 조정 (화면 밖으로 안 나가도록)
     let left = rect.left;
     const maxLeft = vw - Math.min(lw, 280) - 8;
     if (left > maxLeft) left = Math.max(8, maxLeft);
 
     list.style.top = top + 'px';
     list.style.left = left + 'px';
-    list.style.minWidth = Math.max(rect.width, 180) + 'px';
+    list.style.minWidth = Math.max(rect.width, 200) + 'px';
   });
 }
 
@@ -827,7 +1499,7 @@ function selectDeviceNum(kind, el, ev) {
   if (numInput) numInput.value = num;
   if (numLabel) numLabel.textContent = num;
   closeAllNumDropdowns();
-  toast('✓ ' + num + ' 선택됨');
+  toast(num + ' 선택됨');
 }
 
 function startEdit() { editing = true; renderInfo(); enforcePanelWidth(); }
@@ -847,9 +1519,9 @@ async function saveSite() {
     editing = false;
     renderSiteSelect();
     renderInfo();
-    toast('✓ 저장되었습니다');
+    toast('저장되었습니다');
   } catch (e) {
-    toast('⚠️ 저장 실패: ' + (e.message || e));
+    toast('저장 실패: ' + (e.message || e));
   }
 }
 
@@ -865,9 +1537,9 @@ async function addDevice(kind, siteNo) {
     if (kind === 'ext') extensions.push(inserted);
     else tablets.push(inserted);
     renderDevice('ext'); renderDevice('tab'); renderMaster();
-    toast('✓ 등록되었습니다 (발급일/회수일은 행에서 직접 입력)');
+    toast('등록되었습니다');
   } catch (e) {
-    toast('⚠️ 등록 실패: ' + (e.message || e));
+    toast('등록 실패: ' + (e.message || e));
   }
 }
 
@@ -880,9 +1552,9 @@ async function removeDevice(kind, id) {
     if (kind === 'ext') extensions = extensions.filter(x => x.id !== id);
     else tablets = tablets.filter(x => x.id !== id);
     renderDevice('ext'); renderDevice('tab'); renderMaster();
-    toast('✓ 삭제되었습니다');
+    toast('삭제되었습니다');
   } catch (e) {
-    toast('⚠️ 삭제 실패: ' + (e.message || e));
+    toast('삭제 실패: ' + (e.message || e));
   }
 }
 
@@ -895,9 +1567,9 @@ async function updateDeviceDate(kind, id, field, value) {
     const list = kind === 'ext' ? extensions : tablets;
     const item = list.find(x => x.id === id);
     if (item) item[field] = newVal;
-    toast('✓ 날짜가 저장되었습니다');
+    toast('날짜가 저장되었습니다');
   } catch (e) {
-    toast('⚠️ 저장 실패: ' + (e.message || e));
+    toast('저장 실패: ' + (e.message || e));
   }
 }
 
@@ -935,23 +1607,66 @@ function renderMaster() {
   for (const u of usage) (usageMap[u.num] = usageMap[u.num] || []).push(u.site_no);
   const usedCount = master.filter(m => usageMap[m.num]).length;
   summary.innerHTML = `
-    전체 <strong>${master.length}</strong>개
-    · 사용중 <strong style="color:#1d6e3d;">${usedCount}</strong>개
-    · 미사용 <strong style="color:#9ca3af;">${master.length - usedCount}</strong>개
+    <span><span class="dot total"></span>전체 <strong>${master.length}</strong></span>
+    <span><span class="dot used"></span>사용중 <strong>${usedCount}</strong></span>
+    <span><span class="dot unused"></span>미사용 <strong>${master.length - usedCount}</strong></span>
   `;
-  grid.innerHTML = master.map(m => {
+
+  // 브랜드별로 번호 그룹핑
+  const brandGroups = {}; // { brandName: [{num, siteNo}, ...] }
+  const unusedNums = [];
+
+  for (const m of master) {
     const list = usageMap[m.num];
-    if (list) {
-      const names = list.map(no => {
-        const s = sites.find(x => x.site_no === no);
-        return s ? (s.group_name || ('현장'+no)) : ('현장'+no);
-      }).join(', ');
-      return `<div class="master-cell used" title="${escapeHtml(names)}" onclick="alert('${escapeHtml(m.num)} 사용중: ${escapeHtml(names)}')">
-        ${escapeHtml(m.num)}<span class="info">사용중</span>
-      </div>`;
+    if (list && list.length > 0) {
+      for (const siteNo of list) {
+        const s = sites.find(x => x.site_no === siteNo);
+        const brand = s ? (s.brand || s.house_name || s.group_name || ('현장'+siteNo)) : ('현장'+siteNo);
+        if (!brandGroups[brand]) brandGroups[brand] = [];
+        brandGroups[brand].push({ num: m.num, siteNo });
+      }
+    } else {
+      unusedNums.push(m.num);
     }
-    return `<div class="master-cell unused">${escapeHtml(m.num)}<span class="info">미사용</span></div>`;
-  }).join('');
+  }
+
+  // 브랜드 정렬 (가나다순)
+  const brandNames = Object.keys(brandGroups).sort((a, b) => a.localeCompare(b, 'ko'));
+
+  let html = '';
+
+  // 사용중 - 브랜드별 그룹 카드
+  for (const brand of brandNames) {
+    const nums = brandGroups[brand].sort((a, b) => a.num.localeCompare(b.num));
+    html += `
+      <div class="brand-group used">
+        <div class="brand-group-head">
+          <span class="brand-name">${escapeHtml(brand)}</span>
+          <span class="brand-count">${nums.length}</span>
+        </div>
+        <div class="brand-group-body">
+          ${nums.map(n => `<span class="num-chip">${escapeHtml(n.num)}</span>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // 미사용 - 하나의 그룹으로 묶기
+  if (unusedNums.length > 0) {
+    html += `
+      <div class="brand-group unused">
+        <div class="brand-group-head">
+          <span class="brand-name">미사용</span>
+          <span class="brand-count">${unusedNums.length}</span>
+        </div>
+        <div class="brand-group-body">
+          ${unusedNums.map(num => `<span class="num-chip">${escapeHtml(num)}</span>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  grid.innerHTML = html;
 }
 
 (async () => {
@@ -963,7 +1678,7 @@ function renderMaster() {
   enforcePanelWidth();
   setTimeout(enforcePanelWidth, 300);
   setTimeout(enforcePanelWidth, 800);
-  toast(`✓ ${sites.length}개 현장 로드 완료`);
+  toast(`${sites.length}개 현장 로드 완료`);
 
   const refresh = async () => {
     if (editing) return;
