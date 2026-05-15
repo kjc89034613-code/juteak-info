@@ -549,6 +549,18 @@
   table.device-table tbody tr:last-child {
     border-bottom: 1px solid var(--border);
   }
+  /* 회수된 항목 - 옅게 표시 */
+  table.device-table tbody tr.returned td {
+    opacity: 0.55;
+  }
+  table.device-table tbody tr.returned td.num {
+    background: #fef2f2;
+    color: #991b1b;
+    position: relative;
+  }
+  table.device-table tbody tr.returned:hover td {
+    opacity: 0.85;
+  }
   table.device-table td {
     padding: 6px 6px;
     text-align: center;
@@ -1415,10 +1427,15 @@ function renderDevice(kind) {
   const s = getSite(currentSiteId);
   if (!s) return;
   const list = items.filter(x => x.site_no === s.site_no);
-  count.textContent = `${list.length}`;
+  // 카운트는 회수일이 없는 (실제 사용중인) 항목만 집계
+  const activeList = list.filter(x => !x.returned_date);
+  count.textContent = `${activeList.length}`;
 
   const usedMap = {};
-  for (const it of items) usedMap[it.num] = it.site_no;
+  // 회수일이 입력된 항목은 사용중이 아니므로 usedMap에서 제외
+  for (const it of items) {
+    if (!it.returned_date) usedMap[it.num] = it.site_no;
+  }
 
   const fmtShort = (d) => {
     if (!d) return '';
@@ -1431,7 +1448,7 @@ function renderDevice(kind) {
 
   const rows = list.length
     ? list.map(it => `
-      <tr>
+      <tr${it.returned_date ? ' class="returned"' : ''}>
         <td class="num">${escapeHtml(it.num)}</td>
         <td class="date-cell">
           <label class="date-wrap">
@@ -1639,7 +1656,19 @@ async function updateDeviceDate(kind, id, field, value) {
     const list = kind === 'ext' ? extensions : tablets;
     const item = list.find(x => x.id === id);
     if (item) item[field] = newVal;
-    toast('날짜가 저장되었습니다');
+    // 회수일이 변경되면 사용중/미사용 상태가 바뀌므로 관련 화면 다시 그리기
+    if (field === 'returned_date') {
+      renderDevice('ext');
+      renderDevice('tab');
+      renderMaster();
+      if (newVal) {
+        toast('회수 처리되어 미사용으로 변경됐습니다');
+      } else {
+        toast('회수일이 해제되어 사용중으로 변경됐습니다');
+      }
+    } else {
+      toast('날짜가 저장되었습니다');
+    }
   } catch (e) {
     toast('저장 실패: ' + (e.message || e));
   }
@@ -1676,7 +1705,10 @@ function renderMaster() {
   const master = isExt ? masterExt : masterTab;
   const usage = isExt ? extensions : tablets;
   const usageMap = {};
-  for (const u of usage) (usageMap[u.num] = usageMap[u.num] || []).push(u.site_no);
+  // 회수일이 입력된 항목은 사용중이 아니므로 제외
+  for (const u of usage) {
+    if (!u.returned_date) (usageMap[u.num] = usageMap[u.num] || []).push(u.site_no);
+  }
   const usedCount = master.filter(m => usageMap[m.num]).length;
   summary.innerHTML = `
     <span><span class="dot total"></span>전체 <strong>${master.length}</strong></span>
