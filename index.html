@@ -510,6 +510,34 @@
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
   }
+
+  /* 수정 모드 셀: 입력 + X 지우기 버튼 */
+  .edit-cell {
+    display: flex; align-items: flex-start; gap: 6px;
+  }
+  .edit-cell input,
+  .edit-cell textarea {
+    flex: 1; min-width: 0;
+  }
+  .btn-clear {
+    flex-shrink: 0;
+    width: 28px; height: 32px;
+    background: #f4f4f5;
+    color: #71717a;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s ease;
+  }
+  .btn-clear:hover {
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #fca5a5;
+  }
   table.info-table td textarea {
     resize: vertical;
     min-height: 56px;
@@ -580,6 +608,37 @@
     background: var(--surface-muted);
     border-right: 1px solid var(--border);
     padding: 9px 6px;
+  }
+  table.device-table td.ip-cell {
+    padding: 4px 5px;
+  }
+  table.device-table .cell-ip {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+    text-align: center;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+  }
+  table.device-table .cell-ip:hover {
+    background: var(--surface-muted);
+    border-color: var(--border-strong);
+  }
+  table.device-table .cell-ip:focus {
+    outline: none;
+    background: var(--surface);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  table.device-table .cell-ip::placeholder {
+    color: var(--text-muted);
+    font-weight: 400;
   }
   table.device-table td.date-cell { padding: 4px 5px; }
   table.device-table .date-wrap {
@@ -1039,16 +1098,19 @@
     table.info-table td { padding: 8px 13px; font-size: 14px; }
     table.info-table td input,
     table.info-table td textarea { font-size: 14px; padding: 7px 11px; }
-    table.device-table { font-size: 14px; }
-    /* 모바일: 컬럼 폭 재배분 - 날짜 공간 확보 */
-    table.device-table colgroup col,
-    table.device-table thead th:nth-child(1) { width: 16% !important; }
-    table.device-table thead th:nth-child(2),
-    table.device-table thead th:nth-child(3) { width: 28% !important; }
-    table.device-table thead th:nth-child(4) { width: 28% !important; }
-    table.device-table thead th { font-size: 14px; padding: 8px 4px; }
-    table.device-table td { font-size: 14px; padding: 6px 4px; }
-    table.device-table td.num { font-size: 14px; padding: 8px 4px; }
+    table.device-table { font-size: 13px; }
+    /* 모바일: 4컬럼(테블릿) 기준 폭 */
+    table.device-table thead th { font-size: 13px; padding: 6px 3px; }
+    table.device-table td { font-size: 13px; padding: 5px 3px; }
+    table.device-table td.num { font-size: 13px; padding: 6px 3px; }
+    /* 모바일: 5컬럼(내선전화 - IP 컬럼 있음) - 컴팩트하게 */
+    .panel[data-key="ext"] table.device-table thead th { font-size: 11.5px; padding: 6px 2px; }
+    .panel[data-key="ext"] table.device-table td { font-size: 12px; padding: 4px 2px; }
+    .panel[data-key="ext"] table.device-table td.num { font-size: 12px; padding: 6px 2px; }
+    .panel[data-key="ext"] table.device-table .cell-date { font-size: 10.5px; padding: 4px 0; }
+    .panel[data-key="ext"] table.device-table .cell-ip { font-size: 12px; padding: 5px 4px; }
+    .panel[data-key="ext"] table.device-table .btn-x,
+    .panel[data-key="ext"] table.device-table .btn-add { padding: 4px 6px; font-size: 11px; }
     table.device-table td.date-cell { padding: 3px 2px; }
     /* 모바일: input은 클릭 영역으로만 사용하고 시각적으로는 짧은 텍스트 표시 */
     table.device-table .date-wrap {
@@ -1251,8 +1313,10 @@ function renderSiteSelect() {
   const list = $('siteSelectList');
   list.innerHTML = '';
   for (const s of sites) {
-    const brand = s.brand || s.house_name || '';
-    const label = `${s.group_name || ('현장 ' + s.site_no)} — ${brand}`;
+    const brand = s.brand || '';
+    const label = brand
+      ? `${s.group_name || ('현장 ' + s.site_no)} — ${brand}`
+      : (s.group_name || ('현장 ' + s.site_no));
     const item = document.createElement('div');
     item.className = 'custom-select-item';
     item.textContent = label;
@@ -1264,8 +1328,10 @@ function renderSiteSelect() {
   if (currentSiteId) {
     const cur = sites.find(s => s.id == currentSiteId);
     if (cur) {
-      const brand = cur.brand || cur.house_name || '';
-      $('siteSelectLabel').textContent = `${cur.group_name} — ${brand}`;
+      const brand = cur.brand || '';
+      $('siteSelectLabel').textContent = brand
+        ? `${cur.group_name} — ${brand}`
+        : cur.group_name;
     }
   } else {
     $('siteSelectLabel').textContent = '주택전시관을 선택하세요';
@@ -1379,10 +1445,15 @@ function renderInfo() {
         ${INFO_FIELDS.map(([k, l, multi]) => `
           <tr>
             <th>${escapeHtml(l)}</th>
-            <td>${multi
-              ? `<textarea data-f="${k}">${escapeHtml(s[k] || '')}</textarea>`
-              : `<input data-f="${k}" value="${escapeHtml(s[k] || '')}">`
-            }</td>
+            <td>
+              <div class="edit-cell">
+                ${multi
+                  ? `<textarea data-f="${k}">${escapeHtml(s[k] || '')}</textarea>`
+                  : `<input data-f="${k}" value="${escapeHtml(s[k] || '')}">`
+                }
+                <button type="button" class="btn-clear" onclick="clearField('${k}')" title="내용 지우기">×</button>
+              </div>
+            </td>
           </tr>
         `).join('')}
       </table>
@@ -1464,9 +1535,13 @@ function renderDevice(kind) {
             <span class="date-short">${escapeHtml(fmtShort(it.returned_date))}</span>
           </label>
         </td>
+        ${isExt ? `<td class="ip-cell">
+          <input type="text" class="cell-ip" value="${escapeHtml(it.ip_info || '')}" placeholder="예: 201"
+            onblur="updateDeviceIp('${kind}', ${it.id}, this.value)">
+        </td>` : ''}
         <td><button class="btn-x" onclick="removeDevice('${kind}', ${it.id})">삭제</button></td>
       </tr>`).join('')
-    : `<tr class="empty-row"><td colspan="4">등록된 항목이 없습니다</td></tr>`;
+    : `<tr class="empty-row"><td colspan="${isExt ? 5 : 4}">등록된 항목이 없습니다</td></tr>`;
 
   const optItems = master.map(m => {
     const usedAtSiteNo = usedMap[m.num];
@@ -1483,10 +1558,11 @@ function renderDevice(kind) {
     <table class="device-table">
       <thead>
         <tr>
-          <th style="width:20%;">번호</th>
-          <th style="width:30%;">발급일</th>
-          <th style="width:30%;">회수일</th>
-          <th style="width:20%;">관리</th>
+          <th style="width:${isExt ? '15' : '20'}%;">번호</th>
+          <th style="width:${isExt ? '24' : '30'}%;">발급일</th>
+          <th style="width:${isExt ? '24' : '30'}%;">회수일</th>
+          ${isExt ? '<th style="width:22%;">IP정보</th>' : ''}
+          <th style="width:${isExt ? '15' : '20'}%;">관리</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -1504,6 +1580,7 @@ function renderDevice(kind) {
           </td>
           <td></td>
           <td></td>
+          ${isExt ? '<td></td>' : ''}
           <td>
             <button class="btn-add" onclick="addDevice('${kind}', ${s.site_no})">등록</button>
           </td>
@@ -1594,6 +1671,14 @@ function selectDeviceNum(kind, el, ev) {
 function startEdit() { editing = true; renderInfo(); enforcePanelWidth(); }
 function cancelEdit() { editing = false; renderInfo(); enforcePanelWidth(); }
 
+function clearField(fieldKey) {
+  const el = document.querySelector(`[data-f="${fieldKey}"]`);
+  if (el) {
+    el.value = '';
+    el.focus();
+  }
+}
+
 async function saveSite() {
   const updates = {};
   document.querySelectorAll('#infoBody [data-f]').forEach(el => {
@@ -1656,7 +1741,6 @@ async function updateDeviceDate(kind, id, field, value) {
     const list = kind === 'ext' ? extensions : tablets;
     const item = list.find(x => x.id === id);
     if (item) item[field] = newVal;
-    // 회수일이 변경되면 사용중/미사용 상태가 바뀌므로 관련 화면 다시 그리기
     if (field === 'returned_date') {
       renderDevice('ext');
       renderDevice('tab');
@@ -1671,6 +1755,21 @@ async function updateDeviceDate(kind, id, field, value) {
     }
   } catch (e) {
     toast('저장 실패: ' + (e.message || e));
+  }
+}
+
+async function updateDeviceIp(kind, id, value) {
+  const table = kind === 'ext' ? 'juteak_extensions' : 'juteak_tablets';
+  const newVal = (value || '').trim() || null;
+  try {
+    const { error } = await supa.from(table).update({ ip_info: newVal }).eq('id', id);
+    if (error) throw error;
+    const list = kind === 'ext' ? extensions : tablets;
+    const item = list.find(x => x.id === id);
+    if (item) item.ip_info = newVal;
+    toast('IP 정보가 저장되었습니다');
+  } catch (e) {
+    toast('IP 저장 실패: ' + (e.message || e));
   }
 }
 
