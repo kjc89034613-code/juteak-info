@@ -1695,7 +1695,7 @@
     width: 100%; border-collapse: collapse; font-size: 13px; color: #1f2937;
     font-variant-numeric: tabular-nums; border: 1px solid #c9d3de;
   }
-  table.xl th, table.xl td { border: 1px solid #d5dde6; height: 29px; padding: 0; }
+  table.xl th, table.xl td { border: 1px solid #c9d3de; height: 29px; padding: 0; }   /* 표 선: 모든 표 1px #c9d3de 로 통일 */
   table.xl thead th {
     background: #e4ebf3; color: #334155; font-weight: 700; text-align: center; padding: 7px 2px;
     border-color: #c9d3de;
@@ -1972,9 +1972,9 @@
   .bm-filter input:focus { outline: none; border-color: #6b8fb8; box-shadow: 0 0 0 2px #e4ebf3; }
   .bm-filter .tilde { color: #64748b; font-weight: 700; }
   .bm-summary { font-size: 13px; color: #475569; }
-  .bm-scroll { max-height: 640px; overflow-y: auto; border: 1px solid #c9d3de; }
+  .bm-scroll { max-height: 640px; overflow-y: auto; border: 0; }   /* 칸 테두리만 써서 바깥 선도 1px */
   .bm-card:not(.pm-card) .bm-scroll { max-height: 586px; scrollbar-gutter: stable; }   /* 스크롤 자리는 합계줄 맞춤용으로 분양마케팅 표에만 */   /* 분양마케팅 표: 두 줄(27px×2) 줄임 */
-  .bm-foot-wrap { overflow-y: hidden; scrollbar-gutter: stable; border: 1px solid #c9d3de; border-top: 0; }
+  .bm-foot-wrap { overflow-y: hidden; scrollbar-gutter: stable; border: 0; }
   .bm-foot-wrap:empty, .bm-foot-wrap:has(table:empty) { display: none; }
   .bm-foot-wrap table.bm-table tfoot td { position: static; border-top: 0; }
   table.bm-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 13px; color: #1f2937; font-variant-numeric: tabular-nums; }
@@ -1986,7 +1986,7 @@
   }
   .th-btn:hover { background: #eef2f7; }
   table.bm-table th { position: sticky; top: 0; background: #e4ebf3; color: #334155; font-weight: 700; height: 30px; border-bottom: 1px solid #c9d3de; }
-  table.bm-table th, table.bm-table td { border: 1px solid #b8c4d2; }
+  table.bm-table th, table.bm-table td { border: 1px solid #c9d3de; }   /* 표 선: 모든 표 1px #c9d3de 로 통일 */
   table.bm-table td { height: 27px; padding: 0 10px; }
   table.bm-table td.c { text-align: center; }
   table.bm-table td.r { text-align: right; padding-right: 30px; }   /* 공급가액 오른쪽 여백 (10px → 30px) */
@@ -2396,6 +2396,7 @@
           <select id="ctFromY" onchange="queryContract()"></select><select id="ctFromM" onchange="queryContract()"></select></div>
         <div class="bm-grp"><label>종료</label>
           <select id="ctToY" onchange="queryContract()"></select><select id="ctToM" onchange="queryContract()"></select></div>
+        <button type="button" class="act-btn bm-btn" style="margin-left:auto;" onclick="downloadContractExcel()" title="주택전시관·항목별 매출액/매입액 엑셀 받기">엑셀</button>
       </div>
       <div id="ctBody"></div>
     </div>
@@ -2933,21 +2934,12 @@ function renderDevice(kind) {
   };
   window.fmtShortDate = fmtShort;
 
-  // 노트북 발급일·회수일: 그 전시관 내선전화 날짜를 그대로 씀 (발급일 = 가장 이른 발급일, 회수일 = 내선전화가 모두 회수됐을 때 가장 늦은 회수일)
-  const extHere = extensions.filter(x => x.site_no === s.site_no);
-  const extIssued = extHere.map(x => x.issued_date).filter(Boolean).sort()[0] || '';
-  const extReturned = extHere.length && extHere.every(x => x.returned_date) ? extHere.map(x => x.returned_date).sort().slice(-1)[0] : '';
-  const autoDate = v => `<td class="date-cell auto-date" title="내선전화 날짜를 자동으로 가져옵니다"><span class="date-short">${escapeHtml(fmtShort(v)) || '-'}</span></td>`;
+  // 노트북도 테블릿처럼 발급일·회수일을 직접 입력 (juteak_notebooks 의 issued_date / returned_date, SQL 11)
   const rows = list.length
-    ? list.map(it => kind === 'nb' ? `
-      <tr class="${it.returned_date ? 'returned' : ''}${devChecked[kind].has(it.id) ? ' checked' : ''}">
-        <td class="dev-chk"><input type="checkbox" ${devChecked[kind].has(it.id) ? 'checked' : ''} onchange="devCheck('${kind}', ${it.id}, this.checked)" title="체크한 줄끼리 발급일·회수일을 같이 바꾸거나, 아래 [삭제]로 지움"></td>
-        <td class="num nb-sn-cell">${escapeHtml(devNum(kind, it.num))}</td>
-        ${autoDate(extIssued)}${autoDate(extReturned)}
-      </tr>` : `
+    ? list.map(it => `
       <tr class="${it.returned_date ? 'returned' : ''}${devChecked[kind].has(it.id) ? ' checked' : ''}">
 <td class="dev-chk"><input type="checkbox" ${devChecked[kind].has(it.id) ? 'checked' : ''} onchange="devCheck('${kind}', ${it.id}, this.checked)" title="체크한 줄끼리 발급일·회수일을 같이 바꾸거나, 아래 [삭제]로 지움"></td>
-        <td class="num">${escapeHtml(devNum(kind, it.num))}</td>
+        <td class="num${kind === 'nb' ? ' nb-sn-cell' : ''}">${escapeHtml(devNum(kind, it.num))}</td>
         <td class="date-cell">
           <label class="date-wrap">
             <input type="date" onclick="try { this.showPicker(); } catch (e) {}" class="cell-date${it.issued_date ? '' : ' is-empty'}" value="${escapeHtml(it.issued_date || '')}"
@@ -3554,7 +3546,7 @@ function nbParse(text) {
 const NB_COLS = [['num', 'No'], ...NB_FIELDS.map(f => [f[0], f[1]])];          // 엑셀 다운로드: 전체 칸
 // 화면 표: 엑셀에서 노란색 칠한 칸만 (나머지 사업장·부서 등은 기본값으로 저장되고 엑셀에만 나옴)
 // 목록에서 고르는 칸
-const NB_SELECT = { pc_type: ['표준형', '설계형'], status: ['정상', '고장', '도메인'] };
+const NB_SELECT = { pc_type: ['표준형', '설계형', '미지정'], status: ['정상', '고장', '도메인'] };
 const NB_SHOW = ['pc_type', 'model', 'serial', 'acquired_date', 'status', 'issue'];   // 비고는 화면에서 빼고 엑셀에만
 const NB_SHOW_W = { num: 4, pc_type: 6.14, model: 13.1, serial: 14.82, acquired_date: 7.36, status: 6.65, issue: 13.3 };   // 열 너비 (+ 체크 4, 주택전시관 17.1) — 합이 100이 안 되면 비율대로 늘어남
 const nbOcrMark = {};     // { id: Set(채운 칸) } 사진에서 읽어 채운 칸 (노란색)
@@ -3964,6 +3956,7 @@ async function nbAddRow() {
   if (!nbReady) { alert('노트북 표가 아직 없습니다.\nSupabase에서 5_노트북.sql 을 먼저 실행해 주세요.'); return; }
   const row = { num: nbNextNum() };
   for (const [k, , def] of NB_FIELDS) if (def) row[k] = def;
+  row.region = '보관중';   // 새 노트북은 주택전시관 칸을 '보관중'으로 시작
   try {
     const { data, error } = await supa.from('juteak_master_nb').insert(row).select().single();
     if (error) throw error;
@@ -5048,6 +5041,41 @@ function initContract() {
   queryContract();
 }
 let ctSeq = 0;
+let ctData = null, ctRange = ['', ''];
+// 계약 세부 내역 현황(표·엑셀) 집계에서 빼는 전시관: 이름에 이 글자가 들어가면 제외 (예: '원주', '원주 프리모원' 모두)
+const CT_EXCLUDE = ['번영로', '신정', '원주', '베스티뉴'];
+const ctExcluded = siteName => {
+  const names = [siteName, bunyangName(siteName)].filter(Boolean).map(normName);
+  return CT_EXCLUDE.some(w => names.some(n => n.includes(normName(w))));
+};
+// 엑셀: 주택전시관 / 항목 / 매출액 / 매입액 (조회한 기간 합계, 차수는 항목으로 합침)
+async function downloadContractExcel() {
+  if (!ctData) { alert('조회가 끝난 뒤에 눌러 주세요.'); return; }
+  const items = [...new Set(SALES_ROWS.map(r => r.item))];
+  const g = {};
+  for (const r of ctData) {
+    const def = SALES_ROWS.find(x => x.item === r.item && (x.type !== 'day' || x.round === (r.round || '')));
+    if (!def) continue;
+    const name = bunyangName(r.site_name) || r.site_name || '(이름 없음)';
+    const k = name + '|' + def.item;
+    const t = g[k] = g[k] || { name, item: def.item, sales: 0, purchase: 0 };
+    t.sales += Number(r.sales) || 0;
+    if (SAME_AMOUNT_ITEMS.includes(def.item)) t.purchase += Number(r.sales) || 0;
+    else if (!NO_PURCHASE_ITEMS.includes(def.item)) t.purchase += Number(r.purchase) || 0;
+  }
+  const rows = Object.values(g).filter(x => Math.round(x.sales) || Math.round(x.purchase))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko') || items.indexOf(a.item) - items.indexOf(b.item));
+  if (!rows.length) { alert('이 기간에는 자료가 없습니다.'); return; }
+  const aoa = [['주택전시관', '항목', '매출액', '매입액']];
+  let ts = 0, tp = 0;
+  for (const r of rows) { aoa.push([r.name, r.item, Math.round(r.sales), Math.round(r.purchase)]); ts += r.sales; tp += r.purchase; }
+  aoa.push(['합계', '', Math.round(ts), Math.round(tp)]);
+  try {
+    const blob = await buildStyledXlsx(aoa, { numCols: [2, 3], sheetName: '계약세부내역', footMerge: 2, fontSize: 8, autoFit: true });
+    const [f, to] = ctRange;
+    saveBlob(blob, `계약세부내역_${f}${f === to ? '' : '~' + to}.xlsx`);
+  } catch (e) { toast('엑셀 모듈을 불러오지 못했습니다'); }
+}
 async function queryContract() {
   let from = `${$('ctFromY').value}-${$('ctFromM').value}`;
   let to = `${$('ctToY').value}-${$('ctToM').value}`;
@@ -5057,12 +5085,14 @@ async function queryContract() {
   let data;
   try {
     data = await fetchAllRows(() => supa.from('juteak_sales')
-      .select('id,item,round,actual_use,sales,purchase').gte('bill_month', from).lte('bill_month', to).order('id'));
+      .select('id,site_name,item,round,actual_use,sales,purchase').gte('bill_month', from).lte('bill_month', to).order('id'));
   } catch (err) {
     if (seq === ctSeq) $('ctBody').innerHTML = `<div class="ct-empty">조회 실패: ${escapeHtml(err.message || err)}</div>`;
     return;
   }
   if (seq !== ctSeq) return;   // 더 최근 조회가 있으면 무시
+  data = data.filter(r => !ctExcluded(r.site_name));   // 집계에서 빼는 전시관
+  ctData = data; ctRange = [from, to];   // 엑셀 다운로드용
   const sum = {};
   for (const r of data) {
     const def = SALES_ROWS.find(x => x.item === r.item && (x.type !== 'day' || x.round === (r.round || '')));
@@ -5083,9 +5113,11 @@ function renderContract(sum) {
     <colgroup><col style="width:20%"><col style="width:16%"><col style="width:16%"><col style="width:24%"><col style="width:24%"></colgroup>
     <thead><tr><th>항목</th><th>차수</th><th>실사용</th><th>매출액</th><th>매입액</th></tr></thead><tbody>`;
   let ts = 0, tp = 0, ss = 0, sp = 0;
+  let tu = 0, su = 0;   // 실사용: 소계 = 차수 합, 합계 = 상담석·테블릿 소계 합 (상담석 유지·DCRM 등 개수는 단위가 달라 빼고 계산)
   SALES_ROWS.forEach((r, i) => {
     const t = sum[`${r.item}|${r.round}`] || { use: 0, sales: 0, purchase: 0 };
     const isDay = r.type === 'day';
+    if (isDay) { su += t.use; tu += t.use; }
     const first = i === 0 || SALES_ROWS[i - 1].item !== r.item;
     const last = i === SALES_ROWS.length - 1 || SALES_ROWS[i + 1].item !== r.item;
     const noP = NO_PURCHASE_ITEMS.includes(r.item);
@@ -5101,11 +5133,11 @@ function renderContract(sum) {
     html += `<td class="num">${isDay ? dec(t.use) : won(t.use)}</td><td class="num">${won(t.sales)}</td>`
       + (noP ? '<td class="na"></td>' : `<td class="num">${won(t.purchase)}</td>`) + '</tr>';
     if (isDay && last) {
-      html += `<tr class="subtotal"><td colspan="2" class="lbl">소 계</td><td></td><td class="num">${won(ss)}</td><td class="num">${won(sp)}</td></tr>`;
+      html += `<tr class="subtotal"><td colspan="2" class="lbl">소 계</td><td class="num">${dec(su)}</td><td class="num">${won(ss)}</td><td class="num">${won(sp)}</td></tr>`;
     }
-    if (last) { ss = 0; sp = 0; }
+    if (last) { ss = 0; sp = 0; su = 0; }
   });
-  html += `</tbody><tfoot><tr><td colspan="2" class="lbl">합 계</td><td></td><td class="num">${won(ts)}</td><td class="num">${won(tp)}</td></tr></tfoot></table>`;
+  html += `</tbody><tfoot><tr><td colspan="2" class="lbl">합 계</td><td class="num">${dec(tu)}</td><td class="num">${won(ts)}</td><td class="num">${won(tp)}</td></tr></tfoot></table>`;
   $('ctBody').innerHTML = html;
 }
 
