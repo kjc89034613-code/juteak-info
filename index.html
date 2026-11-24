@@ -5266,7 +5266,7 @@ async function zipFiles(files) {
 // ---- 메일 직접 발송: DL그룹 빌링시스템(내 PC의 localhost:5000)에 등록된 발신 Gmail 계정으로 보냄 ----
 // 빌링시스템이 켜져 있어야 함. 꺼져 있으면 예전처럼 파일 내려받기 + 메일 창 열기로 대신함
 const MAIL_SERVER = 'http://localhost:5000';
-async function sendMailViaServer(to, subject, body, files) {
+async function sendMailViaServer(to, subject, body, files, htmlBody) {
   let acc;
   try {
     acc = await (await fetch(MAIL_SERVER + '/smtp_account')).json();
@@ -5280,6 +5280,7 @@ async function sendMailViaServer(to, subject, body, files) {
   fd.append('to_email', to);
   fd.append('subject', subject);
   fd.append('body', body);
+  if (htmlBody) fd.append('html_body', htmlBody);   // 표가 보이는 HTML 본문 (빌링시스템이 지원)
   fd.append('smtp_user', acc.smtp_user);
   fd.append('smtp_password', acc.smtp_password);
   files.forEach(f => fd.append('file', f.blob, f.name));
@@ -5294,10 +5295,10 @@ async function sendMailViaServer(to, subject, body, files) {
   return acc.smtp_user;
 }
 // 메일 보내기 (실패하면 이유를 알려주고, 서버가 꺼져 있으면 내려받기+메일 창으로 대신)
-async function deliverMail(to, subject, body, files, zipName) {
+async function deliverMail(to, subject, body, files, zipName, htmlBody) {
   setBusy(`${to} 으로 보내는 중...`);
   try {
-    const from = await sendMailViaServer(to, subject, body, files);
+    const from = await sendMailViaServer(to, subject, body, files, htmlBody);
     setBusy();
     alert(`${to} 으로 보냈어요.\n(보낸 계정: ${from}, 첨부 ${files.length}개)`);
     return;
@@ -5374,8 +5375,26 @@ async function emailPumeui(who) {
     files = [{ name: pumeuiFileName(), blob: xlsx }, ...pdfs];
   } catch (e) { setBusy(); alert('첨부 파일을 만들지 못했습니다.\n' + (e.message || e)); return; }
   const subject = `주택전시관 품의 (${ymLabel(month)})`;
-  const body = '주택전시관 품의 및 공문 송부';
-  await deliverMail(to, subject, body, files, `주택전시관_품의_${month}.zip`);
+  const { text, html } = pumeuiMailTable();
+  const body = '주택전시관 품의 및 공문 송부\n\n' + text;
+  const htmlBody = `<div style="font-family:'맑은 고딕',sans-serif; font-size:13px; color:#222;"><p style="margin:0 0 12px;">주택전시관 품의 및 공문 송부</p>${html}</div>`;
+  await deliverMail(to, subject, body, files, `주택전시관_품의_${month}.zip`, htmlBody);
+}
+// 품의 메일 본문 표: 주택전시관 / 금월 청구 / 담당자명 / e메일 (+ 합계)
+function pumeuiMailTable() {
+  const e = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const won = v => Math.round(v || 0).toLocaleString('ko-KR');
+  const rows = pmRows.map(r => { const st = gmSiteFor(r.name) || {}; return [r.name, won(r.cur), st.tax_name || '', st.tax_email || '']; });
+  const total = won(pmRows.reduce((a, r) => a + (r.cur || 0), 0));
+  const th = 'style="background:#dceaf8; color:#1a4971; font-weight:700; border:1px solid #b9c1cc; padding:5px 10px; text-align:center;"';
+  const td = al => `style="border:1px solid #b9c1cc; padding:5px 10px; text-align:${al};"`;
+  const tf = al => `style="background:#dceaf8; color:#1a4971; font-weight:700; border:1px solid #b9c1cc; padding:5px 10px; text-align:${al};"`;
+  const html = `<table style="border-collapse:collapse; font-size:12.5px;">`
+    + `<tr><th ${th}>주택전시관</th><th ${th}>금월 청구</th><th ${th}>담당자명</th><th ${th}>e메일</th></tr>`
+    + rows.map(r => `<tr><td ${td('center')}>${e(r[0])}</td><td ${td('right')}>${e(r[1])}</td><td ${td('center')}>${e(r[2])}</td><td ${td('center')}>${e(r[3])}</td></tr>`).join('')
+    + `<tr><td ${tf('center')}>합계</td><td ${tf('right')}>${total}</td><td ${tf('center')}></td><td ${tf('center')}></td></tr></table>`;
+  const text = ['주택전시관 | 금월 청구 | 담당자명 | e메일', ...rows.map(r => r.join(' | ')), `합계 | ${total}`].join('\n');
+  return { text, html };
 }
 
 // ---------- (1) 금월 입력 ----------
