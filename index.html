@@ -2373,7 +2373,7 @@
           <select id="pmY"></select><select id="pmM"></select></div>
         <button type="button" class="act-btn query bm-btn" style="margin-left:auto;" onclick="queryPumeui()">조회</button>
         <button type="button" class="act-btn bm-btn" onclick="downloadPumeuiExcel()">엑셀</button>
-        <button type="button" class="act-btn pm-mail" title="kjc89034613@gmail.com (G메일) 으로 품의 엑셀 + 공문 미날인본·날인본 보내기" onclick="emailPumeui('gu')">e메일(구)</button>
+        <button type="button" class="act-btn pm-mail" title="kjc89034613@gmail.com (G메일) 으로 품의 엑셀 + 공문 미날인본 보내기" onclick="emailPumeui('gu')">e메일(구)</button>
         <button type="button" class="act-btn pm-mail" title="20049186@daelim.co.kr (회사 메일) 으로 품의 엑셀 + 공문 미날인본 보내기" onclick="emailPumeui('oh')">e메일(오)</button>
       </div>
       <div class="bm-scroll"><table class="bm-table" id="pmTable"></table></div>
@@ -4710,6 +4710,8 @@ async function makeDocPdf(pageId, sealed) {
   }
 }
 const docPdfName = (prefix, name, month, sealed) => `${prefix}${sealed ? '(날인)' : ''}_${name}_${month}.pdf`;
+// 품의 메일 첨부 공문 이름: '2611 기성공문(동탄역 어반원)-210,000.pdf' (날인본은 끝에 '-날인본')
+const gongmunMailName = (name, month, amt, sealed) => `${String(month).replace(/\D/g, '').slice(2, 6)} 기성공문(${name})-${Math.round(amt || 0).toLocaleString('ko-KR')}${sealed ? '-날인본' : ''}.pdf`;
 async function downloadDocPdf(pageId, prefix) {
   const page = $(pageId);
   if (!page) { alert('주택전시관과 월을 먼저 선택하세요.'); return; }
@@ -5230,12 +5232,12 @@ async function buildGongmunPdfs(list, opt) {
       if (opt.plain) {
         const b = await makeDocPdf('dlPage', false);
         if (!b) throw new Error('PDF를 만들지 못했습니다');
-        files.push({ name: docPdfName('DLENC공문', r.name, month, false), blob: b });
+        files.push({ name: gongmunMailName(r.name, month, r.cur, false), blob: b });
       }
       if (opt.sealed) {
         const b = await makeDocPdf('dlPage', true);
         if (!b) throw new Error('PDF를 만들지 못했습니다');
-        files.push({ name: docPdfName('DLENC공문', r.name, month, true), blob: b });
+        files.push({ name: gongmunMailName(r.name, month, r.cur, true), blob: b });
       }
     }
   } finally {
@@ -5349,26 +5351,25 @@ async function downloadPumeuiExcel() {
     return blob;
   } catch (e) { toast('엑셀 모듈을 불러오지 못했습니다'); return null; }
 }
-// e메일(오): 품의 엑셀 + 전시관별 공문 미날인본  → 20049186@daelim.co.kr (회사 메일)
-// e메일(구): 품의 엑셀 + 전시관별 공문 미날인본 + 날인본 → kjc89034613@gmail.com (G메일)
+// e메일(오): 품의 엑셀 + 전시관별 공문 미날인본 → 20049186@daelim.co.kr (회사 메일)
+// e메일(구): 품의 엑셀 + 전시관별 공문 미날인본 → kjc89034613@gmail.com (G메일)
+// 본문은 '주택전시관 품의 및 공문 송부' 한 줄, 공문 이름은 '2611 기성공문(현장명)-금월청구.pdf'
 // 발신은 DL그룹 빌링시스템에 등록된 Gmail 계정
 async function emailPumeui(who) {
   if (!pmRows.length) { alert('먼저 조회하세요.'); return; }
   const month = pmMonth();
   const to = PM_MAIL[who];
-  if (!confirm(`품의 엑셀과 공문${who === 'gu' ? '(미날인본·날인본)' : '(미날인본)'}을\n${to} 으로 보낼까요?`)) return;
+  if (!confirm(`품의 엑셀과 공문(미날인본)을\n${to} 으로 보낼까요?`)) return;
   let files;
   try {
     setBusy('품의 엑셀 만드는 중...');
     const xlsx = await makePumeuiExcel();
-    const pdfs = await buildGongmunPdfs(pmRows, { plain: true, sealed: who === 'gu' });
+    const pdfs = await buildGongmunPdfs(pmRows, { plain: true, sealed: false });   // 미날인본만
     files = [{ name: pumeuiFileName(), blob: xlsx }, ...pdfs];
   } catch (e) { setBusy(); alert('첨부 파일을 만들지 못했습니다.\n' + (e.message || e)); return; }
-  const won = n => Math.round(n).toLocaleString('ko-KR');
-  const lines = pumeuiAoa().slice(1).map(r => `${r[0]} : 전월 누계 ${won(r[1])} / 금월 청구 ${won(r[2])} / 청구 누계 ${won(r[3])}`);
   const subject = `주택전시관 품의 (${ymLabel(month)})`;
-  const body = `${subject}\n\n${lines.join('\n')}\n\n※ 첨부\n${files.map(f => ` - ${f.name}`).join('\n')}`;
-  await deliverMail(to, subject, body, files, `주택전시관_품의_${month}${who === 'gu' ? '_날인포함' : ''}.zip`);
+  const body = '주택전시관 품의 및 공문 송부';
+  await deliverMail(to, subject, body, files, `주택전시관_품의_${month}.zip`);
 }
 
 // ---------- (1) 금월 입력 ----------
