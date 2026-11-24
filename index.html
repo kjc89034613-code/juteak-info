@@ -1135,6 +1135,7 @@
     transition: background .15s ease, border-color .15s ease, box-shadow .15s ease; }
   .ic-btn:hover { background: #eef1f7; border-color: #6b7894; box-shadow: 0 1px 4px rgba(15, 23, 42, .12); }
   .ic-btn svg { display: block; }
+  .ic-btn.ic-txt { width: auto; padding: 0 14px; font: inherit; font-size: 13px; font-weight: 700; }   /* 아이콘 대신 글자 버튼 (노트북 [추가]) */
   .ic-btn.ic-del { color: #b42318; border-color: #d98a8a; }
   .ic-btn.ic-del:hover { background: #fdf1f1; border-color: #c25b5b; }
   .ic-btn.ic-xl { color: #1f7a4d; border-color: #86b89c; }
@@ -1916,19 +1917,16 @@
   table.bm-table td .gm-btn { position: static; transform: none; height: 22px; white-space: nowrap; padding: 0 7px; }
   .gm-modal { background: #fff; border-radius: 10px; width: 640px; max-width: 100%; max-height: calc(100vh - 32px); display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-lg); }
   .gm-modal-head { background: #b3a99a; }
-  /* 공문 팝업: 빌링시스템 표준 팝업 모양 — 회색 제목줄(#6b7b95) 46px + 흰 ✕ */
-  #gmModal .price-modal-head.gm-modal-head { background: #6b7b95; height: 46px; box-sizing: border-box; padding: 0 14px 0 18px; font-size: 15px; }
-  #gmModal .price-modal-head.gm-modal-head .gm-x { font-size: 18px; padding: 4px; margin-left: 4px; }
   .gm-modal-body { padding: 14px; overflow: hidden; }   /* 공문 한 장을 통째로 축소해서 보여주므로 스크롤 없음 */
   #gmModal .gm-modal { width: auto; }
   #gmViewport { box-sizing: content-box; }
   .price-modal-head.gm-modal-head .gm-pdf-btn {
     height: 28px; padding: 0 12px; font-size: 12.5px; font-weight: 700; line-height: 1;
-    background: #fff; color: #3d4a5f; border: 1px solid #c9d0db; border-radius: 5px;
+    background: #fff; color: #5a4f3f; border: 1px solid #d8cfc2; border-radius: 5px;
   }
-  .price-modal-head.gm-modal-head .gm-pdf-btn:hover { background: #eef1f6; }
+  .price-modal-head.gm-modal-head .gm-pdf-btn:hover { background: #f5f1ea; }
   .gm-seal-chk { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 700; color: #fff; cursor: pointer; user-select: none; }
-  .gm-seal-chk input { width: 14px; height: 14px; margin: 0; accent-color: #6b7b95; cursor: pointer; }
+  .gm-seal-chk input { width: 14px; height: 14px; margin: 0; accent-color: #8a5a44; cursor: pointer; }
   .busy-mask { position: fixed; inset: 0; background: rgba(30,30,30,.28); display: none; align-items: center; justify-content: center; z-index: 3000; }
   .busy-mask.show { display: flex; }
   .busy-box { background: #fff; border-radius: 10px; padding: 18px 26px; font-size: 14px; font-weight: 600; color: #333; box-shadow: var(--shadow-lg); }
@@ -2249,7 +2247,7 @@
               <button type="button" class="ic-btn ic-del" onclick="nbDeleteChecked()" title="삭제 (체크한 줄)" aria-label="삭제"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
               <button type="button" class="ic-btn ic-xl" onclick="nbExcel()" title="엑셀로 내려받기 (전체 칸)" aria-label="엑셀"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9.5 12.5l5 5M14.5 12.5l-5 5"/></svg></button>
               <span class="nb-tools-gap"></span>
-              <button type="button" class="ic-btn" onclick="nbAddRow()" title="행 추가" aria-label="행 추가"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><path d="M3 15h8M3 20h8"/><path d="M17.5 14v7M14 17.5h7"/></svg></button>
+              <button type="button" class="ic-btn ic-txt" onclick="nbAddRow()" title="행 추가">추가</button>
             </div>
             <input type="file" id="nbFile" accept="image/*" hidden onchange="nbPhotoPicked(this.files[0]); this.value=''">
           </div>
@@ -2376,7 +2374,7 @@
           <select id="pmY"></select><select id="pmM"></select></div>
         <button type="button" class="act-btn query bm-btn" style="margin-left:auto;" onclick="queryPumeui()">조회</button>
         <button type="button" class="act-btn bm-btn" onclick="downloadPumeuiExcel()">엑셀</button>
-        <button type="button" class="act-btn pm-mail" title="kjc89034613@gmail.com (G메일) 으로 품의 엑셀 + 공문 미날인본 보내기" onclick="emailPumeui('gu')">e메일(구)</button>
+        <button type="button" class="act-btn pm-mail" title="kjc89034613@gmail.com (G메일) 으로 품의 엑셀 + 공문 미날인본·날인본 보내기" onclick="emailPumeui('gu')">e메일(구)</button>
         <button type="button" class="act-btn pm-mail" title="20049186@daelim.co.kr (회사 메일) 으로 품의 엑셀 + 공문 미날인본 보내기" onclick="emailPumeui('oh')">e메일(오)</button>
       </div>
       <div class="bm-scroll"><table class="bm-table" id="pmTable"></table></div>
@@ -2492,7 +2490,7 @@
       <span style="display:flex; gap:8px; align-items:center;">
         <label class="gm-seal-chk"><input type="checkbox" id="gmSealChk" onchange="$('gmPage') && $('gmPage').classList.toggle('sealed', this.checked)"> 날인</label>
         <button type="button" class="btn-pdf gm-pdf-btn" onclick="downloadDocPdf('gmPage', 'DLENC공문')">PDF 다운로드</button>
-        <button type="button" class="gm-x" title="닫기" onclick="closeGongmunPdf()">✕</button>
+        <button type="button" onclick="closeGongmunPdf()">×</button>
       </span>
     </div>
     <div class="gm-modal-body"><div class="dl-viewport" id="gmViewport"><div id="gmDoc"></div></div></div>
@@ -3910,7 +3908,7 @@ function renderNbTable() {
       : `<th>${label}</th>`).join('')}<th>주택전시관</th></tr></thead>`;
   if (!nbReady || !masterNb.length) {
     t.innerHTML = head + `<tbody><tr><td class="nb-empty" style="white-space:normal" colspan="${cols.length + 2}">${nbReady
-      ? '등록된 노트북이 없습니다. 아래 [+ 행 추가]를 눌러 시작하세요.'
+      ? '등록된 노트북이 없습니다. 아래 [추가]를 눌러 시작하세요.'
       : '노트북 표가 아직 없습니다. Supabase에서 5_노트북.sql, 6_노트북_정보.sql 을 실행해 주세요.'}</td></tr></tbody>`;
     return;
   }
@@ -4621,7 +4619,6 @@ function renderDlencDoc() {
     F42: prevSum, K42: curSum,
   });
   box.innerHTML = buildGridDoc(DL_GRID, V, add4, 'dlPage', `<img class="dl-logo" src="${DL_LOGO}" alt="DAELIM">`, DL_SEAL);
-  if ($('dlPage')) $('dlPage').dataset.amt = Math.round(curSum || 0);   // 파일 이름용 금월 청구 금액
   fitDoc('dlViewport', 'dlPage');
 }
 
@@ -4714,8 +4711,6 @@ async function makeDocPdf(pageId, sealed) {
   }
 }
 const docPdfName = (prefix, name, month, sealed) => `${prefix}${sealed ? '(날인)' : ''}_${name}_${month}.pdf`;
-// 품의 메일 첨부 공문 이름: '2611 기성공문(동탄역 어반원)-210,000.pdf' (날인본은 끝에 '-날인본')
-const gongmunMailName = (name, month, amt, sealed) => `${String(month).replace(/\D/g, '').slice(2, 6)} 기성공문(${name})-${Math.round(amt || 0).toLocaleString('ko-KR')}${sealed ? '-날인본' : ''}.pdf`;
 async function downloadDocPdf(pageId, prefix) {
   const page = $(pageId);
   if (!page) { alert('주택전시관과 월을 먼저 선택하세요.'); return; }
@@ -4723,9 +4718,7 @@ async function downloadDocPdf(pageId, prefix) {
   if (!blob) return;
   const name = page.dataset.name || $('entSite').value;
   const month = page.dataset.month || $('entMonth').value;
-  const sealed = page.classList.contains('sealed');
-  // DLENC 공문: '2611 기성공문(현장명)-금월청구.pdf' (날인본은 '-날인본'), 하도공문은 예전 이름 그대로
-  saveBlob(blob, prefix === 'DLENC공문' && page.dataset.amt != null ? gongmunMailName(name, month, Number(page.dataset.amt), sealed) : docPdfName(prefix, name, month, sealed));
+  saveBlob(blob, docPdfName(prefix, name, month, page.classList.contains('sealed')));
 }
 
 
@@ -4887,7 +4880,7 @@ function renderBunyang() {
 }
 // 서식 있는 엑셀 만들기 (맑은 고딕 9 · 회색 선 · 머리/합계줄 배경 · 금액 회계서식 · 눈금선 없음)
 // aoa: 2차원 배열(첫 줄 머리, 마지막 줄 합계), numCols: 금액 열 번호들, footMerge: 합계줄에서 합칠 칸 수
-async function buildStyledXlsx(aoa, { numCols = [], widths = [], sheetName = 'Sheet1', footMerge = 1, fontSize = 9, autoFit = false } = {}) {
+async function buildStyledXlsx(aoa, { numCols = [], widths = [], sheetName = 'Sheet1', footMerge = 1, fontSize = 9, autoFit = false, cellFmt = null } = {}) {
   await loadScriptOnce('https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js');
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   if (autoFit) {
@@ -4925,7 +4918,7 @@ async function buildStyledXlsx(aoa, { numCols = [], widths = [], sheetName = 'Sh
         ...(head || foot ? { fill: { patternType: 'solid', fgColor: { rgb: 'E4EBF3' } } } : {}),
       };
       // 금액: 회계 서식 (0은 "-"), 오른쪽 여백을 기본보다 50% 더
-      if (isNum) ws[ref].z = '_-* #,##0_-_.;\\-* #,##0_-_.;_-* "-"_-_.;_-@_-_.';
+      if (isNum) ws[ref].z = (cellFmt && cellFmt(r, c)) || '_-* #,##0_-_.;\\-* #,##0_-_.;_-* "-"_-_.;_-@_-_.';
     }
   }
   const wb = XLSX.utils.book_new();
@@ -5065,21 +5058,35 @@ async function downloadContractExcel() {
     const def = SALES_ROWS.find(x => x.item === r.item && (x.type !== 'day' || x.round === (r.round || '')));
     if (!def) continue;
     const name = bunyangName(r.site_name) || r.site_name || '(이름 없음)';
-    const k = name + '|' + def.item;
-    const t = g[k] = g[k] || { name, item: def.item, sales: 0, purchase: 0 };
+    const month = String(r.bill_month || '').slice(0, 7);
+    const k = name + '|' + month + '|' + def.item;
+    const t = g[k] = g[k] || { name, month, item: def.item, use: 0, sales: 0, purchase: 0 };
+    t.use += Number(r.actual_use) || 0;
     t.sales += Number(r.sales) || 0;
     if (SAME_AMOUNT_ITEMS.includes(def.item)) t.purchase += Number(r.sales) || 0;
     else if (!NO_PURCHASE_ITEMS.includes(def.item)) t.purchase += Number(r.purchase) || 0;
   }
-  const rows = Object.values(g).filter(x => Math.round(x.sales) || Math.round(x.purchase))
-    .sort((a, b) => a.name.localeCompare(b.name, 'ko') || items.indexOf(a.item) - items.indexOf(b.item));
+  const rows = Object.values(g).filter(x => Math.round(x.use * 100) || Math.round(x.sales) || Math.round(x.purchase))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko') || a.month.localeCompare(b.month) || items.indexOf(a.item) - items.indexOf(b.item));
   if (!rows.length) { alert('이 기간에는 자료가 없습니다.'); return; }
-  const aoa = [['주택전시관', '항목', '매출액', '매입액']];
-  let ts = 0, tp = 0;
-  for (const r of rows) { aoa.push([r.name, r.item, Math.round(r.sales), Math.round(r.purchase)]); ts += r.sales; tp += r.purchase; }
-  aoa.push(['합계', '', Math.round(ts), Math.round(tp)]);
+  // 실사용: 상담석·테블릿은 소수점 둘째 자리, 나머지(상담석 유지·DCRM 등)는 개수. 합계는 화면처럼 상담석+테블릿만
+  const dayItems = new Set(SALES_ROWS.filter(r => r.type === 'day').map(r => r.item));
+  const r2 = n => Math.round(n * 100) / 100;
+  const aoa = [['주택전시관', '월', '항목', '실사용', '매출액', '매입액']];
+  const decRows = new Set();
+  let tu = 0, ts = 0, tp = 0;
+  for (const r of rows) {
+    const day = dayItems.has(r.item);
+    if (day) { decRows.add(aoa.length); tu += r.use; }
+    aoa.push([r.name, r.month, r.item, day ? r2(r.use) : Math.round(r.use), Math.round(r.sales), Math.round(r.purchase)]);
+    ts += r.sales; tp += r.purchase;
+  }
+  decRows.add(aoa.length);
+  aoa.push(['합계', '', '', r2(tu), Math.round(ts), Math.round(tp)]);
+  const DEC = '_-* #,##0.00_-_.;\\-* #,##0.00_-_.;_-* "-"_-_.;_-@_-_.';
   try {
-    const blob = await buildStyledXlsx(aoa, { numCols: [2, 3], sheetName: '계약세부내역', footMerge: 2, fontSize: 8, autoFit: true });
+    const blob = await buildStyledXlsx(aoa, { numCols: [3, 4, 5], sheetName: '계약세부내역', footMerge: 3, fontSize: 8, autoFit: true,
+      cellFmt: (r, c) => c === 3 && decRows.has(r) ? DEC : null });
     const [f, to] = ctRange;
     saveBlob(blob, `계약세부내역_${f}${f === to ? '' : '~' + to}.xlsx`);
   } catch (e) { toast('엑셀 모듈을 불러오지 못했습니다'); }
@@ -5093,7 +5100,7 @@ async function queryContract() {
   let data;
   try {
     data = await fetchAllRows(() => supa.from('juteak_sales')
-      .select('id,site_name,item,round,actual_use,sales,purchase').gte('bill_month', from).lte('bill_month', to).order('id'));
+      .select('id,site_name,bill_month,item,round,actual_use,sales,purchase').gte('bill_month', from).lte('bill_month', to).order('id'));
   } catch (err) {
     if (seq === ctSeq) $('ctBody').innerHTML = `<div class="ct-empty">조회 실패: ${escapeHtml(err.message || err)}</div>`;
     return;
@@ -5238,12 +5245,12 @@ async function buildGongmunPdfs(list, opt) {
       if (opt.plain) {
         const b = await makeDocPdf('dlPage', false);
         if (!b) throw new Error('PDF를 만들지 못했습니다');
-        files.push({ name: gongmunMailName(r.name, month, r.cur, false), blob: b });
+        files.push({ name: docPdfName('DLENC공문', r.name, month, false), blob: b });
       }
       if (opt.sealed) {
         const b = await makeDocPdf('dlPage', true);
         if (!b) throw new Error('PDF를 만들지 못했습니다');
-        files.push({ name: gongmunMailName(r.name, month, r.cur, true), blob: b });
+        files.push({ name: docPdfName('DLENC공문', r.name, month, true), blob: b });
       }
     }
   } finally {
@@ -5266,7 +5273,7 @@ async function zipFiles(files) {
 // ---- 메일 직접 발송: DL그룹 빌링시스템(내 PC의 localhost:5000)에 등록된 발신 Gmail 계정으로 보냄 ----
 // 빌링시스템이 켜져 있어야 함. 꺼져 있으면 예전처럼 파일 내려받기 + 메일 창 열기로 대신함
 const MAIL_SERVER = 'http://localhost:5000';
-async function sendMailViaServer(to, subject, body, files, htmlBody) {
+async function sendMailViaServer(to, subject, body, files) {
   let acc;
   try {
     acc = await (await fetch(MAIL_SERVER + '/smtp_account')).json();
@@ -5280,7 +5287,6 @@ async function sendMailViaServer(to, subject, body, files, htmlBody) {
   fd.append('to_email', to);
   fd.append('subject', subject);
   fd.append('body', body);
-  if (htmlBody) fd.append('html_body', htmlBody);   // 표가 보이는 HTML 본문 (빌링시스템이 지원)
   fd.append('smtp_user', acc.smtp_user);
   fd.append('smtp_password', acc.smtp_password);
   files.forEach(f => fd.append('file', f.blob, f.name));
@@ -5295,10 +5301,10 @@ async function sendMailViaServer(to, subject, body, files, htmlBody) {
   return acc.smtp_user;
 }
 // 메일 보내기 (실패하면 이유를 알려주고, 서버가 꺼져 있으면 내려받기+메일 창으로 대신)
-async function deliverMail(to, subject, body, files, zipName, htmlBody) {
+async function deliverMail(to, subject, body, files, zipName) {
   setBusy(`${to} 으로 보내는 중...`);
   try {
-    const from = await sendMailViaServer(to, subject, body, files, htmlBody);
+    const from = await sendMailViaServer(to, subject, body, files);
     setBusy();
     alert(`${to} 으로 보냈어요.\n(보낸 계정: ${from}, 첨부 ${files.length}개)`);
     return;
@@ -5358,43 +5364,26 @@ async function downloadPumeuiExcel() {
     return blob;
   } catch (e) { toast('엑셀 모듈을 불러오지 못했습니다'); return null; }
 }
-// e메일(오): 품의 엑셀 + 전시관별 공문 미날인본 → 20049186@daelim.co.kr (회사 메일)
-// e메일(구): 품의 엑셀 + 전시관별 공문 미날인본 → kjc89034613@gmail.com (G메일)
-// 본문은 '주택전시관 품의 및 공문 송부' 한 줄, 공문 이름은 '2611 기성공문(현장명)-금월청구.pdf'
+// e메일(오): 품의 엑셀 + 전시관별 공문 미날인본  → 20049186@daelim.co.kr (회사 메일)
+// e메일(구): 품의 엑셀 + 전시관별 공문 미날인본 + 날인본 → kjc89034613@gmail.com (G메일)
 // 발신은 DL그룹 빌링시스템에 등록된 Gmail 계정
 async function emailPumeui(who) {
   if (!pmRows.length) { alert('먼저 조회하세요.'); return; }
   const month = pmMonth();
   const to = PM_MAIL[who];
-  if (!confirm(`품의 엑셀과 공문(미날인본)을\n${to} 으로 보낼까요?`)) return;
+  if (!confirm(`품의 엑셀과 공문${who === 'gu' ? '(미날인본·날인본)' : '(미날인본)'}을\n${to} 으로 보낼까요?`)) return;
   let files;
   try {
     setBusy('품의 엑셀 만드는 중...');
     const xlsx = await makePumeuiExcel();
-    const pdfs = await buildGongmunPdfs(pmRows, { plain: true, sealed: false });   // 미날인본만
+    const pdfs = await buildGongmunPdfs(pmRows, { plain: true, sealed: who === 'gu' });
     files = [{ name: pumeuiFileName(), blob: xlsx }, ...pdfs];
   } catch (e) { setBusy(); alert('첨부 파일을 만들지 못했습니다.\n' + (e.message || e)); return; }
+  const won = n => Math.round(n).toLocaleString('ko-KR');
+  const lines = pumeuiAoa().slice(1).map(r => `${r[0]} : 전월 누계 ${won(r[1])} / 금월 청구 ${won(r[2])} / 청구 누계 ${won(r[3])}`);
   const subject = `주택전시관 품의 (${ymLabel(month)})`;
-  const { text, html } = pumeuiMailTable();
-  const body = '주택전시관 품의 및 공문 송부\n\n' + text;
-  const htmlBody = `<div style="font-family:'맑은 고딕',sans-serif; font-size:13px; color:#222;"><p style="margin:0 0 12px;">주택전시관 품의 및 공문 송부</p>${html}</div>`;
-  await deliverMail(to, subject, body, files, `주택전시관_품의_${month}.zip`, htmlBody);
-}
-// 품의 메일 본문 표: 주택전시관 / 금월 청구 / 담당자명 / e메일 (+ 합계)
-function pumeuiMailTable() {
-  const e = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const won = v => Math.round(v || 0).toLocaleString('ko-KR');
-  const rows = pmRows.map(r => { const st = gmSiteFor(r.name) || {}; return [r.name, won(r.cur), st.tax_name || '', st.tax_email || '']; });
-  const total = won(pmRows.reduce((a, r) => a + (r.cur || 0), 0));
-  const th = 'style="background:#dceaf8; color:#1a4971; font-weight:700; border:1px solid #b9c1cc; padding:5px 10px; text-align:center;"';
-  const td = al => `style="border:1px solid #b9c1cc; padding:5px 10px; text-align:${al};"`;
-  const tf = al => `style="background:#dceaf8; color:#1a4971; font-weight:700; border:1px solid #b9c1cc; padding:5px 10px; text-align:${al};"`;
-  const html = `<table style="border-collapse:collapse; font-size:12.5px;">`
-    + `<tr><th ${th}>주택전시관</th><th ${th}>금월 청구</th><th ${th}>담당자명</th><th ${th}>e메일</th></tr>`
-    + rows.map(r => `<tr><td ${td('center')}>${e(r[0])}</td><td ${td('right')}>${e(r[1])}</td><td ${td('center')}>${e(r[2])}</td><td ${td('center')}>${e(r[3])}</td></tr>`).join('')
-    + `<tr><td ${tf('center')}>합계</td><td ${tf('right')}>${total}</td><td ${tf('center')}></td><td ${tf('center')}></td></tr></table>`;
-  const text = ['주택전시관 | 금월 청구 | 담당자명 | e메일', ...rows.map(r => r.join(' | ')), `합계 | ${total}`].join('\n');
-  return { text, html };
+  const body = `${subject}\n\n${lines.join('\n')}\n\n※ 첨부\n${files.map(f => ` - ${f.name}`).join('\n')}`;
+  await deliverMail(to, subject, body, files, `주택전시관_품의_${month}${who === 'gu' ? '_날인포함' : ''}.zip`);
 }
 
 // ---------- (1) 금월 입력 ----------
