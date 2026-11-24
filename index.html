@@ -4618,6 +4618,7 @@ function renderDlencDoc() {
     F42: prevSum, K42: curSum,
   });
   box.innerHTML = buildGridDoc(DL_GRID, V, add4, 'dlPage', `<img class="dl-logo" src="${DL_LOGO}" alt="DAELIM">`, DL_SEAL);
+  if ($('dlPage')) $('dlPage').dataset.amt = Math.round(curSum || 0);   // 파일 이름용 금월 청구 금액
   fitDoc('dlViewport', 'dlPage');
 }
 
@@ -4719,7 +4720,9 @@ async function downloadDocPdf(pageId, prefix) {
   if (!blob) return;
   const name = page.dataset.name || $('entSite').value;
   const month = page.dataset.month || $('entMonth').value;
-  saveBlob(blob, docPdfName(prefix, name, month, page.classList.contains('sealed')));
+  const sealed = page.classList.contains('sealed');
+  // DLENC 공문: '2611 기성공문(현장명)-금월청구.pdf' (날인본은 '-날인본'), 하도공문은 예전 이름 그대로
+  saveBlob(blob, prefix === 'DLENC공문' && page.dataset.amt != null ? gongmunMailName(name, month, Number(page.dataset.amt), sealed) : docPdfName(prefix, name, month, sealed));
 }
 
 
