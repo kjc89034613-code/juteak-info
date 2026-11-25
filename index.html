@@ -1917,12 +1917,12 @@
   table.bm-table td .gm-btn { position: static; transform: none; height: 22px; white-space: nowrap; padding: 0 7px; }
   .gm-modal { background: #fff; border-radius: 10px; width: 640px; max-width: 100%; max-height: calc(100vh - 32px); display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-lg); }
   .gm-modal-head { background: #717b93; }   /* 공문 팝업 제목줄: 과금번호 팝업과 같은 회청색 */
-  .gm-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px 0; }
+  .gm-bar { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 0 14px 12px; }   /* 날인·다운로드: 맨 아래 오른쪽 끝 */
   .gm-seal-box { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px 0 10px; border-radius: 8px;
     background: #eef0f4; border: 1px solid #dfe3ea; cursor: pointer; user-select: none; }
   .gm-seal-box .gm-seal-lbl { font-size: 12.5px; font-weight: 700; color: #4e5566; }
   .gm-seal-box input { width: 16px; height: 16px; margin: 0; accent-color: #5b60c8; cursor: pointer; }
-  .ic-btn.gm-pdf-ic { color: #5b60c8; border-color: #a9acea; }
+  .ic-btn.gm-pdf-ic { width: 18px; height: 17px; border-width: 1.5px; border-radius: 5px; color: #5b60c8; border-color: #a9acea; }   /* 다운로드 버튼 50% 크기 */
   .ic-btn.gm-pdf-ic:hover { background: #f1f1fc; border-color: #5b60c8; }
   .gm-modal-body { padding: 14px; overflow: hidden; }   /* 공문 한 장을 통째로 축소해서 보여주므로 스크롤 없음 */
   #gmModal .gm-modal { width: auto; }
@@ -2496,11 +2496,11 @@
       <span id="gmModalTitle">DLENC 공문</span>
       <button type="button" onclick="closeGongmunPdf()">×</button>
     </div>
+    <div class="gm-modal-body"><div class="dl-viewport" id="gmViewport"><div id="gmDoc"></div></div></div>
     <div class="gm-bar">
       <label class="gm-seal-box"><span class="gm-seal-lbl">날인</span><input type="checkbox" id="gmSealChk" onchange="$('gmPage') && $('gmPage').classList.toggle('sealed', this.checked)" title="체크하면 도장이 찍힌 날인본"></label>
-      <button type="button" class="ic-btn gm-pdf-ic" onclick="downloadDocPdf('gmPage', 'DLENC공문')" title="PDF 다운로드" aria-label="PDF 다운로드"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg></button>
+      <button type="button" class="ic-btn gm-pdf-ic" onclick="downloadDocPdf('gmPage', 'DLENC공문')" title="PDF 다운로드" aria-label="PDF 다운로드"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg></button>
     </div>
-    <div class="gm-modal-body"><div class="dl-viewport" id="gmViewport"><div id="gmDoc"></div></div></div>
   </div>
 </div>
 
