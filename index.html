@@ -1736,15 +1736,17 @@
   .site-combo input[type=text] { width: 100%; box-sizing: border-box; padding-right: 26px; }
   .site-combo-arrow { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 12px; color: #64748b; cursor: pointer; user-select: none; }
   .site-combo-list {
-    display: none; position: absolute; left: 0; top: calc(100% + 3px); z-index: 50; min-width: 100%; width: max-content; max-width: 420px;
+    display: none; position: absolute; left: 0; top: calc(100% + 3px); z-index: 50; min-width: 100%; width: max-content; max-width: 480px; overflow-x: hidden;
     max-height: 320px; overflow-y: auto; background: #fff; border: 1px solid #c9d3de; border-radius: 6px;
     box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12); padding: 4px 0;
   }
   .site-combo-list.show { display: block; }
-  .site-combo-item { padding: 7px 12px; font-size: 13px; color: #1f2937; cursor: pointer; white-space: nowrap; }
+  #entSiteList { max-height: calc(14 * 34px + 10px); }   /* 매출/매입 입력: 분양_14까지 스크롤 없이 한 번에 */
+  #entSiteList .site-combo-item { height: 34px; box-sizing: border-box; padding-top: 0; padding-bottom: 0; display: flex; align-items: center; }
+  .site-combo-item { padding: 7px 12px; font-size: 14px; color: #1f2937; cursor: pointer; white-space: nowrap; }
   .site-combo-item.hover { background: #eef2f7; }
   .site-combo-item.sel { font-weight: 700; color: #334155; }
-  .site-combo-alias { margin-left: 8px; font-size: 11.5px; color: #94a3b8; }
+  .site-combo-alias { margin-left: 8px; font-size: 12.5px; color: #94a3b8; }
   .site-combo-item.legacy { color: #64748b; }
   .site-combo-empty { padding: 10px 12px; font-size: 12.5px; color: #94a3b8; }
   .ent-controls .month-nav select { flex: none; min-width: 0; width: auto; height: 28px; border-radius: 6px; border-color: #d4d9e0; }
@@ -1781,6 +1783,7 @@
   }
   .ent-grp label { font-size: 12.5px; font-weight: 800 !important; color: #3f4a5a; white-space: nowrap; margin: 0; }
   .ent-grp .site-combo { flex: 1 1 auto; min-width: 0; }
+  .ent-grp.ent-site-grp { flex-basis: 345px; }   /* 전시관 검색칸 20% 길게 (입력칸 약 215 → 260px) */
   .ent-controls .ent-grp input[type=text] { height: 28px; border-radius: 6px; border-color: #d4d9e0; padding-right: 8px; }
   #tabContentSales .s-foot .btn-price { height: 32px; padding: 0 16px; }
   /* 세 카드 높이를 같게(공문 카드 기준), 버튼 줄은 카드 아래쪽에 */
@@ -2280,7 +2283,7 @@
       </div>
       <div class="s-inner">
       <div class="ent-controls">
-        <div class="ent-grp">
+        <div class="ent-grp ent-site-grp">
           <label>전시관</label>
           <div class="site-combo" id="entSiteCombo">
             <input type="text" id="entSiteSearch" placeholder="이름 입력..." autocomplete="off"
